@@ -1,0 +1,30 @@
+TEMPLATE: VÍDEO ANÚNCIO (TRAFEGO PAGO, UGC, ADS DE CONVERSÃO)
+=========================================================
+Este template destina-se a anúncios pagos (TikTok Ads, Reels Ads, YouTube Ads). Segue um ritmo de vendas agressivo, mas camuflado sob um formato nativo da plataforma (ex: estilo UGC - User Generated Content) para não parecer um anúncio chato.
+
+Estrutura recomendada de Blocos:
+1. O GANCHO DE NATIVIDADE (0s - 5s):
+   - Deve parecer um vídeo orgânico de um criador de conteúdo. Nada de logotipos piscando nos primeiros 3 segundos.
+   - Exemplo: "Eu precisava te contar o que descobri sobre [tópico]" ou "Se você é [profissão], pare de rolar a tela agora."
+   - Visual: Uma pessoa usando o produto ou mostrando uma tela com cara de surpresa.
+
+2. A DOR / O PROBLEMA COMUM (5s - 15s):
+   - Conexão empática imediata. O espectador se vê na situação de erro ou necessidade descrita.
+   - Exemplo: "Toda vez que você tenta [fazer algo], acontece [isso]?"
+
+3. A APRESENTAÇÃO DO PRODUTO COMO A ÚNICA SAÍDA (15s - 35s):
+   - Demonstração visual do produto/serviço resolvendo o problema em tempo real (ex: gravação de tela rápida, unboxing rápido, "antes e depois").
+   - Foco na facilidade de uso, design limpo (UX) e velocidade de resultado.
+
+4. A PROVA SOCIAL / COMPROVAÇÃO (35s - 45s):
+   - Depoimentos de terceiros na tela (prints de mensagens de WhatsApp, depoimentos em vídeo curtos, avaliações de estrelas).
+   - "Mais de 10.000 pessoas já usam..."
+
+5. A OFERTA IRRESISTÍVEL E A CTA DE AÇÃO DIRETA (45s - 60s):
+   - Escassez ("Apenas hoje", "Desconto de lançamento").
+   - CTA imperativa: "Clique no botão 'Saiba Mais' abaixo e garanta o seu antes que acabe."
+
+REGRAS ESTILO ANÚNCIO:
+- Estética orgânica e "crua" (estilo gravado com celular). Evite superproduções corporativas que acionam a cegueira de anúncios do usuário.
+- Elementos visuais como "notificações simuladas" na tela para chamar a atenção.
+- Ritmo ágil e legendas grandes no centro da tela.

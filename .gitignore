@@ -1,0 +1,17 @@
+# Arquivo de configuração local (contém chaves de API privadas)
+.env
+
+# Cache do Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+
+# Roteiros gerados localmente
+roteiros_gerados/
+
+# Ambientes virtuais
+venv/
+.venv/
+env/

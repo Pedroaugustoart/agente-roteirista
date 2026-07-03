@@ -1,0 +1,29 @@
+TEMPLATE: VÍDEO DE VENDA (CONVERSÃO, LANÇAMENTO, OFERTA DIRETAS)
+============================================================
+Este template foca em conversão direta de vendas, utilizando gatilhos emocionais, quebra de objeções e prova social com uma CTA extremamente clara e direcionada.
+
+Estrutura recomendada de Blocos (Foco em AIDA / PAS):
+1. ATENÇÃO / GANCHO DE DOR (0s - 7s):
+   - Captura instantânea focada na maior dor do cliente ideal ou no desejo mais urgente.
+   - Exemplo: "Cansado de passar horas criando conteúdo que ninguém vê?" ou "Se você não tem clientes recorrentes, o erro está aqui..."
+
+2. AGITAÇÃO DO PROBLEMA / CONSEQUÊNCIA (7s - 20s):
+   - Aprofunda a dor. Mostra o custo de continuar fazendo a mesma coisa.
+   - Apresenta estatísticas, analogias ou cenários realistas de frustração.
+
+3. APRESENTAÇÃO DA SOLUÇÃO (PRODUTO/SERVIÇO) (20s - 35s):
+   - Apresenta o seu produto/serviço não apenas como um produto, mas como a ponte entre a dor e o estado de sucesso.
+   - Mostra o produto em ação (se aplicável), com foco em benefícios práticos, não apenas em características.
+
+4. QUEBRA DE OBJEÇÕES / PROVA SOCIAL (35s - 50s):
+   - Resolve os maiores bloqueios da mente do comprador (Ex: "Não tenho tempo", "É muito caro", "Será que serve para mim?").
+   - Menção a resultados de alunos/clientes ou garantia ("Risco zero").
+
+5. OFERTA E CHAMADA PARA AÇÃO (CTA) (50s - 60s):
+   - A oferta irresistível (bônus exclusivos, desconto por tempo limitado).
+   - Comando claro para ação: "Toque no link da bio", "Clique em saiba mais" ou "Comente QUERO".
+
+REGRAS ESTILO VENDA:
+- Linguagem persuasiva, confiante e focada no cliente (fale mais "Você" do que "Eu" ou "Nós").
+- Elementos visuais limpos e profissionais, destacando preços, garantias e mockups do produto.
+- Trilha sonora inspiradora que constrói um sentimento de urgência e progresso.

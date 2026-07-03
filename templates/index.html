@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gravy Scriptwriter | Roteirista de IA de Alta Retenção</title>
+    <!-- Google Fonts: Outfit & Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome para ícones -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Marked.js para renderizar Markdown de forma limpa -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="app-container">
+        
+        <!-- SIDEBAR LATERAL (Estilo ChatGPT) -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <i class="fa-solid fa-clapperboard logo-icon"></i>
+                    <span>Gravy <small>Scriptwriter</small></span>
+                </div>
+                <button id="btn-new" class="btn-new-chat">
+                    <i class="fa-solid fa-plus"></i> Novo Roteiro
+                </button>
+            </div>
+            
+            <div class="sidebar-content">
+                <div class="history-section">
+                    <h3>Configurações Ativas</h3>
+                    <div id="active-info" class="active-info-box">
+                        <p class="empty-state-text">Nenhum briefing preenchido ainda.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="sidebar-footer">
+                <div class="connection-status">
+                    <span class="status-dot online"></span>
+                    <span id="model-indicator">Gemini Active</span>
+                </div>
+                <div class="author-credits">
+                    <span>v1.0.0 • Local Web Client</span>
+                </div>
+            </div>
+        </aside>
+        
+        <!-- ÁREA PRINCIPAL -->
+        <main class="main-content">
+            
+            <!-- TELA DO FORMULÁRIO STEP-BY-STEP (ONBOARDING) -->
+            <section id="onboarding-container" class="onboarding-container">
+                <div class="welcome-header">
+                    <h1>Crie roteiros irresistíveis para suas redes sociais</h1>
+                    <p>Preencha os detalhes e nossa IA integrará Copywriting, Cinematografia, Retenção e Psicologia no seu vídeo.</p>
+                </div>
+                
+                <!-- PROGRESS BAR -->
+                <div class="progress-bar-container">
+                    <div class="progress-line">
+                        <div id="progress-indicator" class="progress-fill" style="width: 25%;"></div>
+                    </div>
+                    <div class="steps">
+                        <div class="step-dot active" data-step="1">1<span>Canal</span></div>
+                        <div class="step-dot" data-step="2">2<span>Objetivo</span></div>
+                        <div class="step-dot" data-step="3">3<span>Persona</span></div>
+                        <div class="step-dot" data-step="4">4<span>Estilo</span></div>
+                    </div>
+                </div>
+                
+                <!-- CARD COM FORMULÁRIO -->
+                <div class="card glassmorphism-card">
+                    <!-- PASSO 1: PLATAFORMA E TIPO DE ROTEIRO -->
+                    <div class="form-step active" data-step="1">
+                        <h2>1. Onde seu vídeo será publicado e qual o formato?</h2>
+                        
+                        <div class="form-group">
+                            <label>Plataforma Principal</label>
+                            <div class="options-grid" id="grid-plataforma">
+                                <div class="option-card" data-val="TikTok">
+                                    <i class="fa-brands fa-tiktok"></i>
+                                    <span>TikTok</span>
+                                </div>
+                                <div class="option-card" data-val="Instagram Reels">
+                                    <i class="fa-brands fa-instagram"></i>
+                                    <span>Reels</span>
+                                </div>
+                                <div class="option-card" data-val="YouTube Shorts">
+                                    <i class="fa-brands fa-youtube"></i>
+                                    <span>Shorts</span>
+                                </div>
+                                <div class="option-card" data-val="YouTube Vídeo Longo">
+                                    <i class="fa-solid fa-video"></i>
+                                    <span>YouTube Longo</span>
+                                </div>
+                                <div class="option-card" data-val="TikTok/Reels Ads">
+                                    <i class="fa-solid fa-rectangle-ad"></i>
+                                    <span>Anúncio Pago</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Tipo de Vídeo (Template Estrutural)</label>
+                            <div class="options-grid" id="grid-tipo">
+                                <div class="option-card" data-val="educativo">
+                                    <i class="fa-solid fa-graduation-cap"></i>
+                                    <span>Educativo</span>
+                                </div>
+                                <div class="option-card" data-val="venda">
+                                    <i class="fa-solid fa-money-bill-trend-up"></i>
+                                    <span>Venda (PAS)</span>
+                                </div>
+                                <div class="option-card" data-val="viral">
+                                    <i class="fa-solid fa-fire-flame-curved"></i>
+                                    <span>Viral (Ganchos)</span>
+                                </div>
+                                <div class="option-card" data-val="storytelling">
+                                    <i class="fa-solid fa-book-open"></i>
+                                    <span>Storytelling</span>
+                                </div>
+                                <div class="option-card" data-val="anuncio">
+                                    <i class="fa-solid fa-bullhorn"></i>
+                                    <span>Anúncio / UGC</span>
+                                </div>
+                                <div class="option-card" data-val="review">
+                                    <i class="fa-solid fa-magnifying-glass-chart"></i>
+                                    <span>Review / Análise</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- PASSO 2: OBJETIVO E MENSAGEM PRINCIPAL -->
+                    <div class="form-step" data-step="2">
+                        <h2>2. Qual o objetivo e a mensagem central?</h2>
+                        
+                        <div class="form-group">
+                            <label for="input-objetivo">Objetivo Principal do Vídeo</label>
+                            <textarea id="input-objetivo" placeholder="Ex: Vender meu curso de design de UI/UX, fazer o seguidor se inscrever no canal, ou divulgar uma dica rápida de CSS." rows="3"></textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="input-mensagem">Mensagem Central ou Dor que o vídeo resolve</label>
+                            <textarea id="input-mensagem" placeholder="Ex: Programadores sofrem para centralizar divs e criar layouts bonitos. Vou ensinar como resolver isso usando o Flexbox de uma vez por todas." rows="3"></textarea>
+                        </div>
+                    </div>
+                    
+                    <!-- PASSO 3: PERSONA E PÚBLICO -->
+                    <div class="form-step" data-step="3">
+                        <h2>3. Quem é o público-alvo (Persona)?</h2>
+                        
+                        <div class="form-group">
+                            <label for="input-publico">Público-Alvo Detalhado</label>
+                            <textarea id="input-publico" placeholder="Ex: Designers juniores de 18 a 25 anos, entusiastas de jogos de RPG, ou pessoas procurando renda extra trabalhando de casa." rows="4"></textarea>
+                        </div>
+                    </div>
+                    
+                    <!-- PASSO 4: ESTILO, TOM E DETALHES FINAIS -->
+                    <div class="form-step" data-step="4">
+                        <h2>4. Tom, Referências e Duração</h2>
+                        
+                        <div class="form-row">
+                            <div class="form-group flex-1">
+                                <label for="input-tom">Tom de Voz</label>
+                                <select id="input-tom">
+                                    <option value="Descontraído / Humorístico">Descontraído / Humorístico</option>
+                                    <option value="Super Enérgico / Motivacional">Super Enérgico / Motivacional</option>
+                                    <option value="Didático / Informativo / Calmo">Didático / Informativo / Calmo</option>
+                                    <option value="Sarcástico / Ironia Gamer">Sarcástico / Ironia Gamer</option>
+                                    <option value="Corporativo / Sério">Corporativo / Sério</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group flex-1">
+                                <label for="input-duracao">Duração Estimada</label>
+                                <input type="text" id="input-duracao" placeholder="Ex: 30 segundos, 1 minuto, 8 minutos" value="1 minuto">
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="input-referencias">Referências Pop, Memes, Animes ou Games (Opcional)</label>
+                            <input type="text" id="input-referencias" placeholder="Ex: Meme do Pedro Pascal comendo sanduíche, analogia com League of Legends, referência a Goku">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="input-cta">Chamada para Ação (CTA) Final</label>
+                            <input type="text" id="input-cta" placeholder="Ex: Comente 'DESIGN' para receber o link no direct, clique no botão saiba mais">
+                        </div>
+                    </div>
+                    
+                    <!-- BOTÕES DE NAVEGAÇÃO -->
+                    <div class="form-navigation">
+                        <button id="btn-prev" class="btn btn-secondary" style="display: none;">
+                            <i class="fa-solid fa-arrow-left"></i> Anterior
+                        </button>
+                        <button id="btn-next" class="btn btn-primary">
+                            Próximo <i class="fa-solid fa-arrow-right"></i>
+                        </button>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- TELA DE CHAT & VISUALIZADOR DE ROTEIRO (Estilo Split Screen/ChatGPT) -->
+            <section id="chat-container" class="chat-container" style="display: none;">
+                
+                <!-- COLUNA DO CHAT (LADO ESQUERDO) -->
+                <div class="chat-column">
+                    <div id="chat-messages" class="chat-messages">
+                        <!-- Mensagens inseridas dinamicamente via JS -->
+                    </div>
+                    
+                    <div class="chat-input-area">
+                        <div class="input-wrapper">
+                            <textarea id="chat-input" placeholder="Peça alterações no roteiro... (Ex: 'deixe o gancho inicial mais forte' ou 'insira uma piada sobre Elden Ring')" rows="1"></textarea>
+                            <button id="btn-send" class="btn-send-msg">
+                                <i class="fa-solid fa-arrow-up"></i>
+                            </button>
+                        </div>
+                        <p class="input-disclaimer">O Gravy Scriptwriter pode apresentar inconsistências. Revise sempre a formatação antes de gravar.</p>
+                    </div>
+                </div>
+                
+                <!-- COLUNA DO ROTEIRO GERADO (LADO DIREITO - SPLIT VIEW) -->
+                <div class="script-column">
+                    <div class="script-header">
+                        <h2><i class="fa-solid fa-file-signature"></i> Roteiro Final</h2>
+                        <div class="script-actions">
+                            <button id="btn-copy-script" class="btn-action-icon" title="Copiar roteiro em Markdown">
+                                <i class="fa-regular fa-copy"></i>
+                            </button>
+                            <button id="btn-download-script" class="btn-action-icon" title="Baixar arquivo Markdown (.md)">
+                                <i class="fa-solid fa-download"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div id="script-rendered-content" class="script-body markdown-body">
+                        <!-- Roteiro renderizado em HTML/Markdown -->
+                        <div class="generating-placeholder">
+                            <i class="fa-solid fa-spinner fa-spin"></i>
+                            <p>Gerando roteiro de alta performance...</p>
+                        </div>
+                    </div>
+                </div>
+                
+            </section>
+        </main>
+    </div>
+    
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>

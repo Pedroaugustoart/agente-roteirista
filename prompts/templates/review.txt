@@ -1,0 +1,31 @@
+TEMPLATE: VÍDEO REVIEW / ANÁLISE (UNBOXING, COMPARAÇÕES, REVIEW TÉCNICO E OPINIÃO)
+===================================================================================
+Este template é ideal para reviews de produtos físicos, softwares, gadgets, jogos ou serviços. É altamente visual e foca em construir credibilidade através de uma análise equilibrada (prós e contras), culminando em uma recomendação final clara.
+
+Estrutura recomendada de Blocos:
+1. O GANCHO DO VEREDITO (0s - 7s):
+   - Inicia com uma afirmação intrigante ou um take visual do produto em uso, já dando uma pista do veredito final.
+   - Exemplo: "Eu comprei o novo [Produto] e ele não é nada do que te contaram." ou "Será que o [Software X] realmente vale [Preço]? Vamos descobrir."
+   - Edição: B-roll dinâmico em close do produto, ou zoom-in na interface.
+
+2. PRIMEIRAS IMPRESSÕES E DESIGN / UI-UX (7s - 20s):
+   - Análise estética rápida. Qualidade de construção, interface do usuário (UI), facilidade de uso (UX), sensações táteis.
+   - Linguagem visual: Mostrar o unboxing rápido ou gravação de tela com transição rápida.
+
+3. O TESTE DE PERFORMANCE (O QUE FUNCIONA) (20s - 35s):
+   - Apresenta os pontos fortes práticos. O que o produto faz incrivelmente bem.
+   - Fatos reais, benchmarks rápidos ou demonstração visual clara.
+
+4. OS PONTOS NEGATIVOS / OBJEÇÕES REAIS (O QUE DECEPCIONOU) (35s - 45s):
+   - Essencial para criar credibilidade. Mostra defeitos, bugs, dificuldades ou o que poderia melhorar.
+   - Exemplo: "Mas nem tudo são flores. O ponto fraco dele é..."
+
+5. VEREDITO FINAL E RECOMENDAÇÃO (45s - 60s):
+   - Nota final (ex: "Para mim, é um 8/10") ou resposta clara à pergunta ("Vale a pena?").
+   - Quem deve comprar e quem deve evitar.
+   - CTA direcionada (Ex: "Comente se você compraria" ou "Link com desconto na descrição/bio").
+
+REGRAS ESTILO REVIEW:
+- Estética impecável nos planos detalhados (B-rolls de alta qualidade).
+- SFX de cliques, sons robóticos ou mecânicos (se for gadget) para marcar transições.
+- Tom de voz de especialista honesto e imparcial.

@@ -1,0 +1,31 @@
+TEMPLATE: VÍDEO VIRAL (ENTRETENIMENTO, CURIOSIDADE, CONTROVÉRSIA SAUDÁVEL, TENDÊNCIAS)
+===================================================================================
+Este template é desenhado com foco exclusivo nas métricas do algoritmo: alta taxa de retenção nos primeiros segundos e estímulo a comentários, compartilhamentos e loops de visualização.
+
+Estrutura recomendada de Blocos:
+1. O GANCHO HIPNÓTICO (0s - 3s):
+   - Deve ser visualmente chocante, absurdo ou gerar extrema curiosidade.
+   - Exemplo: "Eu quase fui processado por causa deste segredo." ou "Não assista a este vídeo se você quer continuar na sua zona de conforto." ou "Eu testei a IA mais proibida da internet."
+   - Edição: Corte ultra rápido ou elemento visual em movimento acelerado logo no frame 1.
+
+2. A QUEBRA DE EXPECTATIVA / REVIRAVOLTA (3s - 15s):
+   - Introduz o tópico principal, mas faz uma curva inesperada na narrativa ou apresenta um fato inacreditável.
+   - Apresenta o dilema ou mistério central.
+
+3. O DESENVOLVIMENTO RÁPIDO E FLUIDO (15s - 45s):
+   - Informações passadas como se estivesse contando uma fofoca ou revelando um segredo de bastidores.
+   - Ritmo acelerado, piadas rápidas, memes atuais inseridos de forma sutil como efeito sonoro ou sobreposição visual.
+
+4. O GATILHO DE ENGAJAMENTO (COMENTÁRIOS/DEBATE) (45s - 55s):
+   - Cria uma polarização amigável ou pede a opinião sincera do espectador sobre um tema quente.
+   - Exemplo: "Você concorda com isso ou acha que é frescura? Comente aí embaixo." ou "Mande esse vídeo para aquele amigo que faz exatamente isso."
+
+5. O LOOP PERFEITO (55s - 60s):
+   - A última frase do vídeo se conecta gramatical e ritmicamente com a primeira frase do vídeo de forma natural, fazendo com que o espectador comece a assistir o vídeo de novo sem perceber.
+   - Exemplo de fim: "...e é por isso que" (que conecta perfeitamente com o início "você está estudando errado a vida toda...").
+
+REGRAS ESTILO VIRAL:
+- Edição com cortes secos a cada 1.5 a 2.5 segundos.
+- SFX marcantes de transição e cultura pop (ex: meme do 'Minecraft', som de teclado, risadas discretas de fundo).
+- Uso de expressões da moda de forma natural.
+- Alto teor estético ou chocante nos elementos visuais do primeiro frame.

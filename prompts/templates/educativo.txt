@@ -1,0 +1,28 @@
+TEMPLATE: VÍDEO EDUCATIVO (TUTORIAIS, DICAS, QUEBRA DE MITOS, CONCEITOS)
+======================================================================
+Este template é focado em ensinar um conceito de forma rápida, didática e prática, gerando o sentimento de "uau, aprendi algo novo e útil".
+
+Estrutura recomendada de Blocos:
+1. O GANCHO (0s - 5s):
+   - Quebra de padrão imediata. Tira a pessoa da rolagem automática com uma afirmação contraintuitiva ou uma pergunta intrigante sobre o tema.
+   - Exemplo: "Você está estudando errado a vida toda e eu posso provar." ou "3 hacks de design que vão mudar seus projetos hoje."
+
+2. O PROBLEMA / A DOR (5s - 15s):
+   - Mostra por que o método comum falha ou por que o assunto é importante.
+   - Conecta com a frustração do espectador.
+
+3. A SOLUÇÃO / APLICAÇÃO PRÁTICA (15s - 45s):
+   - Passo 1, Passo 2, Passo 3. Explicação rápida, visualmente exemplificada.
+   - Instrua o editor a usar mockups, telas reais ou analogias de cultura pop para simplificar conceitos complexos.
+
+4. A REVELAÇÃO DO "SEGREDO" OU DICA BÔNUS (45s - 55s):
+   - Um toque final que entrega valor adicional inesperado. Cria reciprocidade e vontade de salvar o vídeo.
+
+5. CHAMADA PARA AÇÃO (CTA) E LOOP (55s - 60s):
+   - CTA sutil (Ex: "Quer a parte 2? Comente abaixo" ou "Me segue para mais dicas de X").
+   - Conexão imperceptível com o gancho inicial se for para rede social curta (loop perfeito).
+
+REGRAS ESTILO EDUCATIVO:
+- Linguagem simples, sem jargões desnecessários.
+- Ritmo dinâmico com zoom ins/outs na edição para enfatizar pontos-chave.
+- Legendas de palavras-chave coloridas e dinâmicas na tela.

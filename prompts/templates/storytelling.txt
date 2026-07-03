@@ -1,0 +1,29 @@
+TEMPLATE: VÍDEO STORYTELLING (NARRATIVA EMOCIONANTE, ESTUDOS DE CASO, JORNADA PESSOAL)
+==================================================================================
+Este template serve para criar uma forte conexão emocional com a audiência. Ele utiliza a estrutura clássica de storytelling (Jornada do Herói) adaptada para retenção, gerando identificação e empatia antes de qualquer pitch de vendas ou lição.
+
+Estrutura recomendada de Blocos:
+1. O INCIDENTE INCENTIVADOR / GANCHO NARRATIVO (0s - 7s):
+   - Começa no clímax, no pior momento da história, ou em uma situação altamente identificável.
+   - Exemplo: "Em 2022, eu tinha exatamente R$ 17 na conta e uma demissão nas costas." ou "Eu passei pela pior humilhação profissional da minha vida por causa de um e-mail."
+
+2. O MUNDO COMUM E O DESAFIO (7s - 20s):
+   - Explica o contexto que levou a esse ponto.
+   - Constrói o "vilão" (que pode ser a falta de tempo, a crise, a concorrência, o medo, etc.).
+
+3. O PONTO DE VIRADA / O GUIA (MENTOR OU INSIGHT) (20s - 35s):
+   - O momento em que o protagonista descobre um segredo, muda de mentalidade, encontra uma ferramenta ou recebe um conselho crucial.
+   - Exemplo: "Foi quando decidi aplicar a regra de 1 segundo de UI Design..." ou "Tudo mudou quando li este livro."
+
+4. OS RESULTADOS E A LIÇÃO (35s - 50s):
+   - Mostra o antes vs depois. O triunfo do herói sobre a dificuldade.
+   - Extrai um aprendizado prático e universal para quem está assistindo.
+
+5. A LIÇÃO DA HISTÓRIA E CTA CONECTADA (50s - 60s):
+   - Conclusão inspiradora.
+   - CTA que convida o usuário a seguir a jornada ou adquirir o método para ter o mesmo resultado (Ex: "Escreva sua própria história. Link na bio").
+
+REGRAS ESTILO STORYTELLING:
+- Tom de voz mais intimista, vulnerável e autêntico.
+- Trilha sonora cinematográfica que cresce em intensidade emocional (começa calma/melancólica, sobe no insight, termina inspiradora).
+- Edição focada em expressões faciais (enquadramentos fechados como PPP e PM), B-roll nostálgico ou fotos/vídeos reais de bastidores (gera prova de autenticidade).
