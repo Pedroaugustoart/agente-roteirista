@@ -1,0 +1,15 @@
+DIRETRIZES PARA ANÁLISE, REVIEWS E COMPARAÇÕES (Roit Knowledge Base)
+===================================================================
+
+1. AVALIAÇÃO IMPARCIAL:
+   - Comece dando o veredito ou uma prévia impactante. Ex: "Eu usei este celular por 30 dias e ele quase me fez passar vergonha."
+   - Divida a análise de forma justa: o que é incrível (prós) e o que é terrível (contras).
+   - Apresente fatos técnicos traduzidos para benefícios cotidianos (ex: em vez de dizer "processador de 3Ghz", diga "ele abre jogos pesados instantaneamente sem travar").
+
+2. PROVAS E DEMONSTRAÇÕES:
+   - Mostre closes de alta qualidade do produto ou capturas de tela do software em funcionamento.
+   - Destaque a experiência de usuário (UX) e facilidade de instalação.
+
+3. RECOMENDAÇÃO SEGMENTADA:
+   - Defina claramente quem deve comprar o produto/serviço e quem deve passar longe.
+   - Termine com uma nota de 0 a 10 ou uma classificação clara baseada em custo-benefício.

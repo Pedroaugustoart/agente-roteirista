@@ -1,0 +1,14 @@
+DIRETRIZES PARA CONTEÚDOS EDUCATIVOS E TUTORIAIS (Roit Knowledge Base)
+=====================================================================
+
+1. DIDÁTICA SIMPLIFICADA:
+   - Evite termos complicados. Use analogias de cultura pop ou situações cotidianas para explicar conceitos complexos.
+   - Divida o aprendizado em pequenos passos fáceis (Passo 1, Passo 2, Passo 3).
+   
+2. VALOR IMEDIATO:
+   - O espectador precisa sentir que aprendeu algo prático que pode aplicar nos próximos 5 minutos.
+   - Comece desmistificando uma crença comum. Ex: "Você está limpando seu tênis errado a vida toda." ou "Quase todo mundo erra nessa propriedade CSS básica."
+   
+3. CTA FOCADA EM SALVAR:
+   - Estimule o público a **salvar** o vídeo para consultar mais tarde. Isso é um dos sinais mais fortes para o algoritmo de vídeos educativos.
+   - Ex: "Salve esse vídeo para não esquecer esses comandos na hora de codificar."

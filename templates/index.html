@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gravy Scriptwriter | Roteirista de IA de Alta Retenção</title>
+    <title>Roit | Roteirista de IA Inteligente e Persuasivo</title>
     <!-- Google Fonts: Outfit & Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <!-- FontAwesome para ícones -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Marked.js para renderizar Markdown de forma limpa -->
@@ -17,241 +17,225 @@
 <body>
     <div class="app-container">
         
-        <!-- SIDEBAR LATERAL (Estilo ChatGPT) -->
+        <!-- SIDEBAR LATERAL (Visual Roit) -->
         <aside class="sidebar">
             <div class="sidebar-header">
-                <div class="logo">
-                    <i class="fa-solid fa-clapperboard logo-icon"></i>
-                    <span>Gravy <small>Scriptwriter</small></span>
+                <div class="logo-box">
+                    <div class="logo-text">Roit</div>
                 </div>
-                <button id="btn-new" class="btn-new-chat">
-                    <i class="fa-solid fa-plus"></i> Novo Roteiro
+                <button id="btn-new-roteiro" class="btn-new-roteiro">
+                    <i class="fa-solid fa-plus"></i> Novo roteiro
                 </button>
             </div>
             
             <div class="sidebar-content">
-                <div class="history-section">
-                    <h3>Configurações Ativas</h3>
-                    <div id="active-info" class="active-info-box">
-                        <p class="empty-state-text">Nenhum briefing preenchido ainda.</p>
-                    </div>
+                <h3 class="section-title">Roteiros feitos:</h3>
+                <div id="history-list" class="history-list-box">
+                    <!-- Lista de roteiros carregada dinamicamente via JS -->
+                    <p class="empty-state">Faça login para ver seu histórico.</p>
                 </div>
             </div>
             
             <div class="sidebar-footer">
-                <div class="connection-status">
-                    <span class="status-dot online"></span>
-                    <span id="model-indicator">Gemini Active</span>
-                </div>
-                <div class="author-credits">
-                    <span>v1.0.0 • Local Web Client</span>
+                <div class="user-status-box" id="user-status-sidebar">
+                    <span class="status-dot"></span>
+                    <span class="user-status-name">Desconectado</span>
                 </div>
             </div>
         </aside>
         
-        <!-- ÁREA PRINCIPAL -->
+        <!-- ÁREA DE CONTEÚDO PRINCIPAL -->
         <main class="main-content">
             
-            <!-- TELA DO FORMULÁRIO STEP-BY-STEP (ONBOARDING) -->
-            <section id="onboarding-container" class="onboarding-container">
-                <div class="welcome-header">
-                    <h1>Crie roteiros irresistíveis para suas redes sociais</h1>
-                    <p>Preencha os detalhes e nossa IA integrará Copywriting, Cinematografia, Retenção e Psicologia no seu vídeo.</p>
+            <!-- HEADER DA PÁGINA (Com Banner Central e Avatar) -->
+            <header class="main-header">
+                <div class="header-logo-outline">
+                    <h1>Roit</h1>
                 </div>
-                
-                <!-- PROGRESS BAR -->
-                <div class="progress-bar-container">
-                    <div class="progress-line">
-                        <div id="progress-indicator" class="progress-fill" style="width: 25%;"></div>
-                    </div>
-                    <div class="steps">
-                        <div class="step-dot active" data-step="1">1<span>Canal</span></div>
-                        <div class="step-dot" data-step="2">2<span>Objetivo</span></div>
-                        <div class="step-dot" data-step="3">3<span>Persona</span></div>
-                        <div class="step-dot" data-step="4">4<span>Estilo</span></div>
+                <div class="header-user-profile">
+                    <button id="btn-profile" class="btn-profile-avatar" title="Entrar / Minha Conta">
+                        <i class="fa-solid fa-user"></i>
+                    </button>
+                    <!-- Painel suspenso do usuário -->
+                    <div id="user-dropdown" class="user-dropdown-panel" style="display: none;">
+                        <p class="dropdown-username" id="dropdown-username">Carregando...</p>
+                        <hr>
+                        <button id="btn-logout" class="btn-dropdown-logout">
+                            <i class="fa-solid fa-arrow-right-from-bracket"></i> Sair da conta
+                        </button>
                     </div>
                 </div>
+            </header>
+
+            <!-- CONTAINER DO CONTEÚDO DINÂMICO -->
+            <div class="content-body">
                 
-                <!-- CARD COM FORMULÁRIO -->
-                <div class="card glassmorphism-card">
-                    <!-- PASSO 1: PLATAFORMA E TIPO DE ROTEIRO -->
-                    <div class="form-step active" data-step="1">
-                        <h2>1. Onde seu vídeo será publicado e qual o formato?</h2>
+                <!-- TELA 1: HOME PAGE COM FORMULÁRIO ÚNICO (All-in-one View) -->
+                <section id="form-section" class="form-section">
+                    <div class="form-grid">
                         
-                        <div class="form-group">
-                            <label>Plataforma Principal</label>
-                            <div class="options-grid" id="grid-plataforma">
-                                <div class="option-card" data-val="TikTok">
+                        <!-- Plataforma Principal -->
+                        <div class="form-group span-4">
+                            <label>Plataforma principal</label>
+                            <div class="platform-selector" id="platform-selector">
+                                <div class="platform-option" data-val="TikTok">
                                     <i class="fa-brands fa-tiktok"></i>
                                     <span>TikTok</span>
                                 </div>
-                                <div class="option-card" data-val="Instagram Reels">
+                                <div class="platform-option" data-val="Instagram Reels">
                                     <i class="fa-brands fa-instagram"></i>
                                     <span>Reels</span>
                                 </div>
-                                <div class="option-card" data-val="YouTube Shorts">
+                                <div class="platform-option" data-val="YouTube Shorts">
                                     <i class="fa-brands fa-youtube"></i>
                                     <span>Shorts</span>
                                 </div>
-                                <div class="option-card" data-val="YouTube Vídeo Longo">
-                                    <i class="fa-solid fa-video"></i>
-                                    <span>YouTube Longo</span>
-                                </div>
-                                <div class="option-card" data-val="TikTok/Reels Ads">
-                                    <i class="fa-solid fa-rectangle-ad"></i>
-                                    <span>Anúncio Pago</span>
-                                </div>
                             </div>
                         </div>
-                        
-                        <div class="form-group">
-                            <label>Tipo de Vídeo (Template Estrutural)</label>
-                            <div class="options-grid" id="grid-tipo">
-                                <div class="option-card" data-val="educativo">
-                                    <i class="fa-solid fa-graduation-cap"></i>
-                                    <span>Educativo</span>
-                                </div>
-                                <div class="option-card" data-val="venda">
-                                    <i class="fa-solid fa-money-bill-trend-up"></i>
-                                    <span>Venda (PAS)</span>
-                                </div>
-                                <div class="option-card" data-val="viral">
-                                    <i class="fa-solid fa-fire-flame-curved"></i>
-                                    <span>Viral (Ganchos)</span>
-                                </div>
-                                <div class="option-card" data-val="storytelling">
-                                    <i class="fa-solid fa-book-open"></i>
-                                    <span>Storytelling</span>
-                                </div>
-                                <div class="option-card" data-val="anuncio">
-                                    <i class="fa-solid fa-bullhorn"></i>
-                                    <span>Anúncio / UGC</span>
-                                </div>
-                                <div class="option-card" data-val="review">
-                                    <i class="fa-solid fa-magnifying-glass-chart"></i>
-                                    <span>Review / Análise</span>
-                                </div>
+
+                        <!-- Foco Principal -->
+                        <div class="form-group span-4">
+                            <label>Foco principal</label>
+                            <div class="focus-selector" id="focus-selector">
+                                <button type="button" class="focus-btn" data-val="storytelling">Storytelling</button>
+                                <button type="button" class="focus-btn" data-val="viral">Viral</button>
+                                <button type="button" class="focus-btn" data-val="analise">Análise</button>
+                                <button type="button" class="focus-btn" data-val="educativo">Educativo</button>
                             </div>
                         </div>
+
+                        <!-- Referências -->
+                        <div class="form-group span-4">
+                            <label for="input-ref">Referências</label>
+                            <input type="text" id="input-ref" placeholder="Ex: Anime, game X, meme Y...">
+                        </div>
+
+                        <!-- Duração Estimada -->
+                        <div class="form-group span-4">
+                            <label for="input-dur">Duração estimada</label>
+                            <input type="text" id="input-dur" placeholder="Ex: 30s, 1min, 5min...">
+                        </div>
+
+                        <!-- Público-Alvo -->
+                        <div class="form-group span-4">
+                            <label for="input-pub">Público-alvo</label>
+                            <input type="text" id="input-pub" placeholder="Ex: Jovens investidores, devs iniciantes...">
+                        </div>
+
+                        <!-- CTA -->
+                        <div class="form-group span-4">
+                            <label for="input-cta">CTA</label>
+                            <input type="text" id="input-cta" placeholder="Ex: Comente QUERO, link na bio...">
+                        </div>
+
+                        <!-- Objetivo Principal (Full Width) -->
+                        <div class="form-group span-12">
+                            <label for="input-obj">Objetivo principal</label>
+                            <textarea id="input-obj" placeholder="Descreva em detalhes o que você quer alcançar com este vídeo..." rows="3"></textarea>
+                        </div>
+
+                        <!-- Problema que o vídeo resolve (Full Width) -->
+                        <div class="form-group span-12">
+                            <label for="input-prob">Problema que o vídeo resolve</label>
+                            <textarea id="input-prob" placeholder="Qual a principal dor ou curiosidade que você vai abordar nas falas do vídeo?" rows="3"></textarea>
+                        </div>
+                        
+                        <!-- Tom de Voz (Oculto no design do mockup, mas necessário no backend - definimos automático ou sutil) -->
+                        <input type="hidden" id="input-tom-hidden" value="Didático / Informativo / Calmo">
+
                     </div>
-                    
-                    <!-- PASSO 2: OBJETIVO E MENSAGEM PRINCIPAL -->
-                    <div class="form-step" data-step="2">
-                        <h2>2. Qual o objetivo e a mensagem central?</h2>
-                        
-                        <div class="form-group">
-                            <label for="input-objetivo">Objetivo Principal do Vídeo</label>
-                            <textarea id="input-objetivo" placeholder="Ex: Vender meu curso de design de UI/UX, fazer o seguidor se inscrever no canal, ou divulgar uma dica rápida de CSS." rows="3"></textarea>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="input-mensagem">Mensagem Central ou Dor que o vídeo resolve</label>
-                            <textarea id="input-mensagem" placeholder="Ex: Programadores sofrem para centralizar divs e criar layouts bonitos. Vou ensinar como resolver isso usando o Flexbox de uma vez por todas." rows="3"></textarea>
-                        </div>
-                    </div>
-                    
-                    <!-- PASSO 3: PERSONA E PÚBLICO -->
-                    <div class="form-step" data-step="3">
-                        <h2>3. Quem é o público-alvo (Persona)?</h2>
-                        
-                        <div class="form-group">
-                            <label for="input-publico">Público-Alvo Detalhado</label>
-                            <textarea id="input-publico" placeholder="Ex: Designers juniores de 18 a 25 anos, entusiastas de jogos de RPG, ou pessoas procurando renda extra trabalhando de casa." rows="4"></textarea>
-                        </div>
-                    </div>
-                    
-                    <!-- PASSO 4: ESTILO, TOM E DETALHES FINAIS -->
-                    <div class="form-step" data-step="4">
-                        <h2>4. Tom, Referências e Duração</h2>
-                        
-                        <div class="form-row">
-                            <div class="form-group flex-1">
-                                <label for="input-tom">Tom de Voz</label>
-                                <select id="input-tom">
-                                    <option value="Descontraído / Humorístico">Descontraído / Humorístico</option>
-                                    <option value="Super Enérgico / Motivacional">Super Enérgico / Motivacional</option>
-                                    <option value="Didático / Informativo / Calmo">Didático / Informativo / Calmo</option>
-                                    <option value="Sarcástico / Ironia Gamer">Sarcástico / Ironia Gamer</option>
-                                    <option value="Corporativo / Sério">Corporativo / Sério</option>
-                                </select>
-                            </div>
-                            
-                            <div class="form-group flex-1">
-                                <label for="input-duracao">Duração Estimada</label>
-                                <input type="text" id="input-duracao" placeholder="Ex: 30 segundos, 1 minuto, 8 minutos" value="1 minuto">
-                            </div>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="input-referencias">Referências Pop, Memes, Animes ou Games (Opcional)</label>
-                            <input type="text" id="input-referencias" placeholder="Ex: Meme do Pedro Pascal comendo sanduíche, analogia com League of Legends, referência a Goku">
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="input-cta">Chamada para Ação (CTA) Final</label>
-                            <input type="text" id="input-cta" placeholder="Ex: Comente 'DESIGN' para receber o link no direct, clique no botão saiba mais">
-                        </div>
-                    </div>
-                    
-                    <!-- BOTÕES DE NAVEGAÇÃO -->
-                    <div class="form-navigation">
-                        <button id="btn-prev" class="btn btn-secondary" style="display: none;">
-                            <i class="fa-solid fa-arrow-left"></i> Anterior
-                        </button>
-                        <button id="btn-next" class="btn btn-primary">
-                            Próximo <i class="fa-solid fa-arrow-right"></i>
+
+                    <!-- Botão de Ação Principal -->
+                    <div class="action-bar">
+                        <button id="btn-generate-script" class="btn-generate-script">
+                            Gerar Roteiro com Roit <i class="fa-solid fa-wand-magic-sparkles"></i>
                         </button>
                     </div>
-                </div>
-            </section>
-            
-            <!-- TELA DE CHAT & VISUALIZADOR DE ROTEIRO (Estilo Split Screen/ChatGPT) -->
-            <section id="chat-container" class="chat-container" style="display: none;">
-                
-                <!-- COLUNA DO CHAT (LADO ESQUERDO) -->
-                <div class="chat-column">
-                    <div id="chat-messages" class="chat-messages">
-                        <!-- Mensagens inseridas dinamicamente via JS -->
-                    </div>
+                </section>
+
+                <!-- TELA 2: SPLIT SCREEN (Chat e Roteiro pronto) -->
+                <section id="split-section" class="split-section" style="display: none;">
                     
-                    <div class="chat-input-area">
-                        <div class="input-wrapper">
-                            <textarea id="chat-input" placeholder="Peça alterações no roteiro... (Ex: 'deixe o gancho inicial mais forte' ou 'insira uma piada sobre Elden Ring')" rows="1"></textarea>
-                            <button id="btn-send" class="btn-send-msg">
-                                <i class="fa-solid fa-arrow-up"></i>
-                            </button>
+                    <!-- Painel de Conversa (Lado Esquerdo) -->
+                    <div class="split-panel-chat">
+                        <div id="chat-messages" class="chat-messages">
+                            <!-- Injetado dinamicamente -->
                         </div>
-                        <p class="input-disclaimer">O Gravy Scriptwriter pode apresentar inconsistências. Revise sempre a formatação antes de gravar.</p>
+                        <div class="chat-input-wrapper">
+                            <div class="input-container">
+                                <textarea id="chat-input" placeholder="Peça modificações nas falas do roteiro..." rows="1"></textarea>
+                                <button id="btn-send-chat" class="btn-send-chat">
+                                    <i class="fa-solid fa-arrow-up"></i>
+                                </button>
+                            </div>
+                        </div>
                     </div>
-                </div>
+
+                    <!-- Painel de Roteiro Renderizado (Lado Direito) -->
+                    <div class="split-panel-script">
+                        <div class="script-card-header">
+                            <span class="script-title-label"><i class="fa-solid fa-file-invoice"></i> Roteiro Gerado</span>
+                            <div class="script-actions">
+                                <button id="btn-copy" class="btn-icon-action" title="Copiar roteiro em Markdown">
+                                    <i class="fa-regular fa-copy"></i>
+                                </button>
+                                <button id="btn-download" class="btn-icon-action" title="Baixar roteiro (.md)">
+                                    <i class="fa-solid fa-download"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div id="script-viewport" class="script-viewport markdown-body">
+                            <!-- Roteiro em HTML renderizado -->
+                            <div class="loading-state">
+                                <i class="fa-solid fa-spinner fa-spin"></i>
+                                <p>Carregando roteiro da inteligência artificial...</p>
+                            </div>
+                        </div>
+                    </div>
+
+                </section>
                 
-                <!-- COLUNA DO ROTEIRO GERADO (LADO DIREITO - SPLIT VIEW) -->
-                <div class="script-column">
-                    <div class="script-header">
-                        <h2><i class="fa-solid fa-file-signature"></i> Roteiro Final</h2>
-                        <div class="script-actions">
-                            <button id="btn-copy-script" class="btn-action-icon" title="Copiar roteiro em Markdown">
-                                <i class="fa-regular fa-copy"></i>
-                            </button>
-                            <button id="btn-download-script" class="btn-action-icon" title="Baixar arquivo Markdown (.md)">
-                                <i class="fa-solid fa-download"></i>
-                            </button>
-                        </div>
-                    </div>
-                    
-                    <div id="script-rendered-content" class="script-body markdown-body">
-                        <!-- Roteiro renderizado em HTML/Markdown -->
-                        <div class="generating-placeholder">
-                            <i class="fa-solid fa-spinner fa-spin"></i>
-                            <p>Gerando roteiro de alta performance...</p>
-                        </div>
-                    </div>
-                </div>
-                
-            </section>
+            </div>
         </main>
     </div>
-    
+
+    <!-- MODAL DE LOGIN / REGISTRO (Roit Style) -->
+    <div id="auth-modal" class="auth-modal-overlay">
+        <div class="auth-modal-card glassmorphism">
+            <div class="auth-modal-header">
+                <h2>Acesse o Roit</h2>
+                <p>Faça login ou crie uma conta para salvar seus roteiros.</p>
+            </div>
+            
+            <div class="auth-form" id="login-form-container">
+                <div class="auth-input-group">
+                    <label for="login-username">Nome de usuário</label>
+                    <input type="text" id="login-username" placeholder="Digite seu usuário">
+                </div>
+                <div class="auth-input-group">
+                    <label for="login-password">Senha</label>
+                    <input type="password" id="login-password" placeholder="Digite sua senha">
+                </div>
+                <button id="btn-submit-login" class="btn-auth-submit">Entrar</button>
+                <p class="auth-switch-text">Não tem uma conta? <a href="#" id="link-show-register">Cadastre-se</a></p>
+            </div>
+
+            <div class="auth-form" id="register-form-container" style="display: none;">
+                <div class="auth-input-group">
+                    <label for="reg-username">Nome de usuário</label>
+                    <input type="text" id="reg-username" placeholder="Escolha um usuário">
+                </div>
+                <div class="auth-input-group">
+                    <label for="reg-password">Senha</label>
+                    <input type="password" id="reg-password" placeholder="Crie uma senha segura">
+                </div>
+                <button id="btn-submit-register" class="btn-auth-submit">Cadastrar</button>
+                <p class="auth-switch-text">Já tem uma conta? <a href="#" id="link-show-login">Fazer login</a></p>
+            </div>
+            <div id="auth-error-msg" class="auth-error-alert" style="display: none;">Erro detectado.</div>
+        </div>
+    </div>
+
     <script src="{{ url_for('static', filename='js/app.js') }}"></script>
 </body>
 </html>

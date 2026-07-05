@@ -1,0 +1,20 @@
+DIRETRIZES DE VIRALIDADE E RETENÇÃO DE ALTO IMPACTO (Roit Knowledge Base)
+========================================================================
+
+1. A LEI DO GANCHO (HOOKS IRRESISTÍVEIS):
+   - Os primeiros 2 segundos decidem a vida do vídeo. O gancho precisa usar quebras de padrão e curiosidade mórbida.
+   - Exemplos:
+     * "Ninguém te conta isso sobre..."
+     * "Esta ferramenta parece ilegal, mas não é..."
+     * "Pare de fazer isso se você não quer..."
+   
+2. RETENÇÃO CEREBRAL (QUEBRA DE PADRÃO):
+   - O cérebro precisa de um estímulo visual ou auditivo a cada 2.5 segundos.
+   - Use falas dinâmicas, metáforas rápidas e evite pausas mortas (respirações longas devem ser cortadas na edição).
+   
+3. LOOP PERFEITO:
+   - Termine o vídeo com uma frase incompleta ou conectora que ligue de forma idêntica ao início do vídeo.
+   - Exemplo:
+     * Início: "...descobrir que programar é fácil."
+     * Fim: "E tudo o que você precisa para começar é..."
+     * Quando o vídeo repete, a frase se completa automaticamente, melhorando a métrica de visualizações completas.

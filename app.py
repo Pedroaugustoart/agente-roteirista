@@ -3,15 +3,17 @@ import uuid
 import webbrowser
 from threading import Timer
 from datetime import datetime
-from flask import Flask, request, jsonify, make_response, render_template
+from flask import Flask, request, jsonify, make_response, render_template, session
 from dotenv import load_dotenv
 
 # Carregar variáveis de ambiente
 load_dotenv()
 
 from agent import ScriptAgent
+import db
 
 app = Flask(__name__, template_folder="templates", static_folder="static")
+app.secret_key = os.getenv("FLASK_SECRET_KEY", "roit_secret_key_default_123_456")
 agent = None
 
 def inicializar_agente():
@@ -20,16 +22,77 @@ def inicializar_agente():
     if not api_key or api_key in ["sua_chave_aqui", "seu_token_aqui", ""]:
         print("\n" + "!"*60)
         print("⚠️ AVISO: GEMINI_API_KEY não configurada no seu arquivo .env!")
-        print("Por favor, adicione sua chave de API para o roteirista funcionar.")
+        print("Por favor, adicione sua chave de API para o roteirista Roit funcionar.")
         print("!"*60 + "\n")
     agent = ScriptAgent()
+    # Inicializa as tabelas do banco de dados SQLite
+    db.init_db()
 
 @app.route("/")
 def index():
     return render_template("index.html")
 
+# --- ROTAS DE AUTENTICAÇÃO ---
+
+@app.route("/api/register", methods=["POST"])
+def register():
+    data = request.json
+    username = data.get("username")
+    password = data.get("password")
+    
+    if not username or not password:
+        return jsonify({"error": "Usuário e senha são obrigatórios"}), 400
+        
+    success = db.registrar_usuario(username, password)
+    if success:
+        return jsonify({"message": "Usuário cadastrado com sucesso!"})
+    else:
+        return jsonify({"error": "Nome de usuário já está em uso"}), 409
+
+@app.route("/api/login", methods=["POST"])
+def login():
+    data = request.json
+    username = data.get("username")
+    password = data.get("password")
+    
+    if not username or not password:
+        return jsonify({"error": "Usuário e senha são obrigatórios"}), 400
+        
+    user = db.verificar_usuario(username, password)
+    if user:
+        session["user_id"] = user["id"]
+        session["username"] = user["username"]
+        return jsonify({
+            "message": "Login realizado com sucesso!",
+            "user": user
+        })
+    else:
+        return jsonify({"error": "Usuário ou senha inválidos"}), 401
+
+@app.route("/api/logout", methods=["POST"])
+def logout():
+    session.clear()
+    return jsonify({"message": "Logout realizado com sucesso!"})
+
+@app.route("/api/session", methods=["GET"])
+def get_session():
+    if "user_id" in session:
+        return jsonify({
+            "logged_in": True,
+            "user": {
+                "id": session["user_id"],
+                "username": session["username"]
+            }
+        })
+    return jsonify({"logged_in": False})
+
+# --- ROTAS DE GERAÇÃO E HISTÓRICO ---
+
 @app.route("/api/generate", methods=["POST"])
 def generate():
+    if "user_id" not in session:
+        return jsonify({"error": "Não autorizado. Por favor, faça login."}), 401
+        
     if not agent:
         return jsonify({"error": "Agente não inicializado"}), 500
         
@@ -38,14 +101,32 @@ def generate():
         if not briefing:
             return jsonify({"error": "Dados do briefing ausentes"}), 400
             
+        usuario_id = session["user_id"]
         session_id = str(uuid.uuid4())
+        
+        # Gera o roteiro pelo Gemini
         script = agent.criar_sessao_chat(session_id, briefing)
         
-        # Salva localmente na pasta 'roteiros_gerados' por segurança
+        # Gera um título amigável baseado no objetivo ou dor
+        objetivo = briefing.get("objetivo", "")
+        titulo = (objetivo[:30] + "...") if len(objetivo) > 30 else (objetivo or f"Roteiro {briefing.get('tipo', '').capitalize()}")
+        
+        # Salva o roteiro no banco de dados SQLite
+        roteiro_id = db.salvar_roteiro(
+            usuario_id=usuario_id,
+            titulo=titulo,
+            plataforma=briefing.get("plataforma"),
+            categoria=briefing.get("tipo"),
+            conteudo=script,
+            briefing_json=briefing
+        )
+        
+        # Salva uma cópia local de backup por segurança
         salvar_roteiro_local(script, briefing)
         
         return jsonify({
             "session_id": session_id,
+            "roteiro_id": roteiro_id,
             "script": script
         })
     except Exception as e:
@@ -54,6 +135,9 @@ def generate():
 
 @app.route("/api/chat", methods=["POST"])
 def chat():
+    if "user_id" not in session:
+        return jsonify({"error": "Não autorizado. Por favor, faça login."}), 401
+        
     if not agent:
         return jsonify({"error": "Agente não inicializado"}), 500
         
@@ -61,15 +145,67 @@ def chat():
         data = request.json
         session_id = data.get("session_id")
         message = data.get("message")
+        roteiro_id = data.get("roteiro_id")
         
         if not session_id or not message:
             return jsonify({"error": "Parâmetros session_id ou message ausentes"}), 400
             
-        script = agent.enviar_mensagem_chat(session_id, message)
+        usuario_id = session["user_id"]
+        
+        # Se a sessão já estiver ativa em memória, usamos a refinação simples
+        if session_id in agent.active_chats:
+            script = agent.enviar_mensagem_chat(session_id, message)
+        else:
+            # Caso contrário (sessão inativa ou roteiro carregado do histórico),
+            # precisamos restaurar o contexto a partir do banco de dados
+            if not roteiro_id:
+                return jsonify({"error": "ID do roteiro ausente para restauração da sessão"}), 400
+                
+            roteiro_db = db.obter_roteiro(roteiro_id, usuario_id)
+            if not roteiro_db:
+                return jsonify({"error": "Roteiro não encontrado no histórico"}), 404
+                
+            script = agent.enviar_mensagem_refinacao_historico(
+                session_id=session_id,
+                briefing=roteiro_db["briefing"],
+                roteiro_anterior=roteiro_db["conteudo"],
+                mensagem=message
+            )
+            
+        # Atualiza o roteiro no banco de dados com a nova versão refinada
+        if roteiro_id:
+            roteiro_db = db.obter_roteiro(roteiro_id, usuario_id)
+            if roteiro_db:
+                db.salvar_roteiro(
+                    usuario_id=usuario_id,
+                    titulo=roteiro_db["titulo"],
+                    plataforma=roteiro_db["plataforma"],
+                    categoria=roteiro_db["categoria"],
+                    conteudo=script,
+                    briefing_json=roteiro_db["briefing"],
+                    roteiro_id=roteiro_id
+                )
+        
         return jsonify({"script": script})
     except Exception as e:
         print(f"Erro no chat de refinação: {e}")
         return jsonify({"error": str(e)}), 500
+
+@app.route("/api/history", methods=["GET"])
+def list_history():
+    if "user_id" not in session:
+        return jsonify({"error": "Não autorizado"}), 401
+    roteiros = db.listar_roteiros(session["user_id"])
+    return jsonify({"roteiros": roteiros})
+
+@app.route("/api/history/<roteiro_id>", methods=["GET"])
+def get_history_item(roteiro_id):
+    if "user_id" not in session:
+        return jsonify({"error": "Não autorizado"}), 401
+    roteiro = db.obter_roteiro(roteiro_id, session["user_id"])
+    if not roteiro:
+        return jsonify({"error": "Roteiro não encontrado"}), 404
+    return jsonify({"roteiro": roteiro})
 
 @app.route("/api/download", methods=["POST"])
 def download():
@@ -119,18 +255,16 @@ if __name__ == "__main__":
     
     port = int(os.environ.get("PORT", 5001))
     
-    # Abrir navegador automaticamente após 1.5s apenas se rodando localmente (sem a variável PORT)
     if "PORT" not in os.environ:
         Timer(1.5, lambda: open_browser(port)).start()
         
         print("\n" + "="*60)
-        print("🚀 Iniciando Servidor Web do Gravy Scriptwriter...")
+        print("🚀 Iniciando Servidor Web do Roit...")
         print("Se o seu navegador não abrir automaticamente, acesse:")
         print(f"👉 http://127.0.0.1:{port}")
         print("="*60 + "\n")
     else:
-        print(f"🚀 Iniciando em modo Produção (Nuvem) na porta {port}...")
+        print(f"🚀 Iniciando Roit em modo Produção (Nuvem) na porta {port}...")
     
-    # Na nuvem (Render), precisamos escutar em '0.0.0.0' para aceitar conexões externas
     host = "0.0.0.0" if "PORT" in os.environ else "127.0.0.1"
     app.run(host=host, port=port, debug=False)

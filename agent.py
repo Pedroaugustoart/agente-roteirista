@@ -26,20 +26,71 @@ class ScriptAgent:
         return self._ler_arquivo(caminho_sys)
 
     def carregar_template(self, tipo):
-        caminho_template = os.path.join(self.prompts_dir, "templates", f"{tipo}.txt")
-        return self._ler_arquivo(caminho_template)
+        # Mapeia categoria 'analise' para o template 'review.txt'
+        nome_arquivo = tipo
+        if tipo == "analise":
+            nome_arquivo = "review"
+            
+        caminho_template = os.path.join(self.prompts_dir, "templates", f"{nome_arquivo}.txt")
+        if os.path.exists(caminho_template):
+            return self._ler_arquivo(caminho_template)
+        return "Nenhum template estrutural definido para esta categoria."
+
+    def carregar_conhecimento_categoria(self, categoria):
+        """
+        Lê todos os arquivos de texto (.txt, .md) e PDF (.pdf) localizados
+        na pasta prompts/conhecimento/{categoria}/ e concatena o texto para o RAG local.
+        """
+        cat_folder = categoria.strip().lower()
+        pasta = os.path.join(self.prompts_dir, "conhecimento", cat_folder)
+        
+        if not os.path.exists(pasta):
+            return "Nenhuma base de conhecimento adicional disponível para esta categoria."
+            
+        textos = []
+        try:
+            for nome_arquivo in os.listdir(pasta):
+                caminho_completo = os.path.join(pasta, nome_arquivo)
+                if not os.path.isfile(caminho_completo):
+                    continue
+                    
+                # Ler arquivos .txt ou .md
+                if nome_arquivo.endswith(('.txt', '.md')):
+                    with open(caminho_completo, "r", encoding="utf-8") as f:
+                        textos.append(f"--- Conteúdo do arquivo de treinamento ({nome_arquivo}) ---\n" + f.read())
+                        
+                # Ler arquivos .pdf (Usando pypdf)
+                elif nome_arquivo.endswith('.pdf'):
+                    from pypdf import PdfReader
+                    try:
+                        reader = PdfReader(caminho_completo)
+                        conteudo_pdf = []
+                        for page in reader.pages:
+                            texto_pag = page.extract_text()
+                            if texto_pag:
+                                conteudo_pdf.append(texto_pag)
+                        textos.append(f"--- Conteúdo do PDF de treinamento ({nome_arquivo}) ---\n" + "\n".join(conteudo_pdf))
+                    except Exception as e:
+                        print(f"Aviso: Erro ao ler PDF {nome_arquivo}: {e}")
+                        
+            if not textos:
+                return "Nenhum documento de conhecimento adicional foi inserido nesta categoria ainda. Use o padrão."
+                
+            return "\n\n".join(textos)
+        except Exception as e:
+            return f"Erro ao carregar base de conhecimento: {e}"
 
     def formatar_briefing(self, briefing):
         """Converte o dicionário de respostas em um texto estruturado."""
         return f"""
 DADOS DO BRIEFING COLETADOS:
 - Plataforma/Canal: {briefing.get('plataforma')}
-- Tipo de Vídeo: {briefing.get('tipo', '').upper()}
-- Objetivo: {briefing.get('objetivo')}
+- Categoria / Foco Principal: {briefing.get('tipo', '').upper()}
+- Objetivo Principal: {briefing.get('objetivo')}
+- Problema que o Vídeo Resolve: {briefing.get('mensagem_dor')}
 - Público-Alvo: {briefing.get('publico')}
-- Mensagem Principal / Dor: {briefing.get('mensagem_dor')}
 - Tom de Voz: {briefing.get('tom')}
-- Referências Culturais/Pop: {briefing.get('referencias')}
+- Referências Culturais/Pop / Inspirações: {briefing.get('referencias')}
 - Duração Estimada: {briefing.get('duracao')}
 - Chamada para Ação (CTA): {briefing.get('cta')}
 """
@@ -47,14 +98,15 @@ DADOS DO BRIEFING COLETADOS:
     def criar_sessao_chat(self, session_id, briefing):
         """
         Cria um chat persistente na API do Gemini para a sessão do usuário.
-        Envia o primeiro prompt de briefing e retorna o roteiro inicial.
+        Envia o briefing com a base de conhecimento exclusiva da categoria selecionada.
         """
         system_instruction = self.carregar_system_prompt()
         template = self.carregar_template(briefing["tipo"])
+        conhecimento = self.carregar_conhecimento_categoria(briefing["tipo"])
         briefing_formatado = self.formatar_briefing(briefing)
 
         prompt_usuario = f"""
-Por favor, gere um roteiro com base no briefing do usuário e no template fornecido abaixo.
+Por favor, gere um roteiro com base no briefing do usuário, no template estrutural e nas diretrizes de conhecimento exclusivas fornecidas abaixo.
 
 {briefing_formatado}
 
@@ -63,7 +115,12 @@ TEMPLATE DE ESTRUTURA PARA ESTE TIPO DE VÍDEO:
 {template}
 ---
 
-Gere agora o roteiro em português na tabela Markdown com as duas colunas solicitadas (Visual & Edição | Áudio & Locução). 
+---
+BASE DE CONHECIMENTO EXCLUSIVA DE TREINAMENTO (Siga estritamente estas regras e diretrizes ao escrever as falas e edição):
+{conhecimento}
+---
+
+Gere agora o roteiro em português na tabela Markdown com as duas colunas solicitadas (Visual & Edição | Áudio & Locução). Dê destaque máximo para as falas do apresentador na coluna de Áudio & Locução.
 Lembre-se de adicionar a seção de "SEO e Metadados do Vídeo" no final.
 """
 
@@ -72,20 +129,16 @@ Lembre-se de adicionar a seção de "SEO e Metadados do Vídeo" no final.
         try:
             config = types.GenerateContentConfig(
                 system_instruction=system_instruction,
-                temperature=0.75,
+                temperature=0.7,
                 max_output_tokens=8192
             )
             
-            # Criando chat persistente no SDK google-genai
             chat = self.client.chats.create(
                 model=self.model,
                 config=config
             )
             
-            # Salva o objeto do chat na memória da aplicação
             self.active_chats[session_id] = chat
-            
-            # Envia a primeira mensagem com o briefing
             response = chat.send_message(prompt_usuario)
             return response.text
             
@@ -103,8 +156,51 @@ Lembre-se de adicionar a seção de "SEO e Metadados do Vídeo" no final.
         
         print(f"💬 Enviando mensagem de refinação na sessão {session_id}...")
         try:
-            # Envia a mensagem no chat contínuo
             response = chat.send_message(mensagem)
             return response.text
         except Exception as e:
             raise RuntimeError(f"Erro ao enviar mensagem ao Gemini: {e}")
+
+    def enviar_mensagem_refinacao_historico(self, session_id, briefing, roteiro_anterior, mensagem):
+        """
+        Inicializa o chat a partir de um roteiro histórico antigo e aplica o ajuste.
+        """
+        system_instruction = self.carregar_system_prompt()
+        conhecimento = self.carregar_conhecimento_categoria(briefing["tipo"])
+        briefing_formatado = self.formatar_briefing(briefing)
+        
+        print(f"🧠 Restaurando chat para o roteiro do histórico na sessão {session_id}...")
+        
+        try:
+            config = types.GenerateContentConfig(
+                system_instruction=system_instruction,
+                temperature=0.7,
+                max_output_tokens=8192
+            )
+            
+            chat = self.client.chats.create(
+                model=self.model,
+                config=config
+            )
+            self.active_chats[session_id] = chat
+            
+            prompt_contexto = f"""
+Você está editando um roteiro gerado anteriormente.
+{briefing_formatado}
+
+---
+BASE DE CONHECIMENTO EXCLUSIVA:
+{conhecimento}
+---
+
+Aqui está o roteiro atual:
+{roteiro_anterior}
+
+Por favor, faça o seguinte ajuste solicitado pelo usuário no roteiro acima e retorne o roteiro completo atualizado na tabela Markdown:
+"{mensagem}"
+"""
+            response = chat.send_message(prompt_contexto)
+            return response.text
+        except Exception as e:
+            raise RuntimeError(f"Erro ao refinar roteiro antigo: {e}")
+
