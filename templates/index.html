@@ -12,6 +12,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Marked.js para renderizar Markdown de forma limpa -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <!-- Google Identity Services para Login com Google -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
@@ -118,8 +120,8 @@
 
                         <!-- Público-Alvo -->
                         <div class="form-group span-4">
-                            <label for="input-pub">Público-alvo</label>
-                            <input type="text" id="input-pub" placeholder="Ex: Jovens investidores, devs iniciantes...">
+                            <label for="input-pub">Público-alvo e tom de voz</label>
+                            <input type="text" id="input-pub" placeholder="Ex: Jovens investidores com tom divertido, ou advogados com tom sério...">
                         </div>
 
                         <!-- CTA -->
@@ -217,6 +219,30 @@
                     <input type="password" id="login-password" placeholder="Digite sua senha">
                 </div>
                 <button id="btn-submit-login" class="btn-auth-submit">Entrar</button>
+                
+                <!-- Divisor de Login Google -->
+                <div class="auth-divider"><span>ou</span></div>
+                
+                <!-- Botão de Login com Google -->
+                <div class="google-signin-wrapper">
+                    <div id="g_id_onload"
+                         data-client_id="{{ google_client_id }}"
+                         data-context="signin"
+                         data-ux_mode="popup"
+                         data-callback="handleCredentialResponse"
+                         data-auto_prompt="false">
+                    </div>
+                    <div class="g_id_signin"
+                         data-type="standard"
+                         data-shape="rectangular"
+                         data-theme="dark"
+                         data-text="signin_with"
+                         data-size="large"
+                         data-logo_alignment="left"
+                         data-width="336">
+                    </div>
+                </div>
+
                 <p class="auth-switch-text">Não tem uma conta? <a href="#" id="link-show-register">Cadastre-se</a></p>
             </div>
 

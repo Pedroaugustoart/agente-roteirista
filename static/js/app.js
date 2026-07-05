@@ -559,3 +559,25 @@ function hideTypingIndicator() {
 function exibirRoteiro(markdownText) {
     scriptViewport.innerHTML = marked.parse(markdownText);
 }
+
+// Callback global para o Login do Google
+window.handleCredentialResponse = async function(response) {
+    const token = response.credential;
+    try {
+        const res = await fetch("/api/login/google", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ credential: token })
+        });
+        const data = await res.json();
+        if (res.ok) {
+            autenticarUsuarioUI(data.user.username);
+        } else {
+            exhibirErroAuth(data.error || "Erro ao fazer login com o Google");
+        }
+    } catch (err) {
+        console.error("Erro de rede no Google Login:", err);
+        exhibirErroAuth("Erro de conexão ao autenticar com o Google.");
+    }
+}
+

@@ -5,6 +5,8 @@ from threading import Timer
 from datetime import datetime
 from flask import Flask, request, jsonify, make_response, render_template, session
 from dotenv import load_dotenv
+from google.oauth2 import id_token
+from google.auth.transport import requests as google_requests
 
 # Carregar variáveis de ambiente
 load_dotenv()
@@ -25,12 +27,13 @@ def inicializar_agente():
         print("Por favor, adicione sua chave de API para o roteirista Roit funcionar.")
         print("!"*60 + "\n")
     agent = ScriptAgent()
-    # Inicializa as tabelas do banco de dados SQLite
+    # Inicializa as tabelas do banco de dados SQLite/PostgreSQL
     db.init_db()
 
 @app.route("/")
 def index():
-    return render_template("index.html")
+    # Injeta a chave do Google Client ID dinamicamente no HTML
+    return render_template("index.html", google_client_id=os.getenv("GOOGLE_CLIENT_ID", ""))
 
 # --- ROTAS DE AUTENTICAÇÃO ---
 
@@ -68,6 +71,49 @@ def login():
         })
     else:
         return jsonify({"error": "Usuário ou senha inválidos"}), 401
+
+@app.route("/api/login/google", methods=["POST"])
+def google_login():
+    data = request.json
+    token = data.get("credential")
+    
+    if not token:
+        return jsonify({"error": "Token do Google ausente"}), 400
+        
+    client_id = os.getenv("GOOGLE_CLIENT_ID")
+    if not client_id:
+        return jsonify({"error": "GOOGLE_CLIENT_ID não está configurado no servidor."}), 500
+        
+    try:
+        # Valida o token JWT emitido pelo login da conta Google do usuário
+        idinfo = id_token.verify_oauth2_token(token, google_requests.Request(), client_id)
+        
+        email = idinfo.get("email")
+        if not email:
+            return jsonify({"error": "E-mail não retornado pela conta Google"}), 400
+            
+        username = email.split("@")[0]
+        
+        # Busca ou cria o usuário na base de dados
+        user_id = db.obter_ou_criar_usuario_google(email, username)
+        
+        # Registra na sessão
+        session["user_id"] = user_id
+        session["username"] = username
+        
+        return jsonify({
+            "message": "Login com Google realizado com sucesso!",
+            "user": {
+                "id": user_id,
+                "username": username
+            }
+        })
+    except ValueError as e:
+        print(f"Erro na validação do token Google: {e}")
+        return jsonify({"error": "Token de autenticação do Google inválido ou expirado."}), 401
+    except Exception as e:
+        print(f"Erro crítico no login Google: {e}")
+        return jsonify({"error": str(e)}), 500
 
 @app.route("/api/logout", methods=["POST"])
 def logout():
@@ -111,7 +157,7 @@ def generate():
         objetivo = briefing.get("objetivo", "")
         titulo = (objetivo[:30] + "...") if len(objetivo) > 30 else (objetivo or f"Roteiro {briefing.get('tipo', '').capitalize()}")
         
-        # Salva o roteiro no banco de dados SQLite
+        # Salva o roteiro no banco de dados SQLite/PostgreSQL
         roteiro_id = db.salvar_roteiro(
             usuario_id=usuario_id,
             titulo=titulo,

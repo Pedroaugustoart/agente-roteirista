@@ -88,8 +88,7 @@ DADOS DO BRIEFING COLETADOS:
 - Categoria / Foco Principal: {briefing.get('tipo', '').upper()}
 - Objetivo Principal: {briefing.get('objetivo')}
 - Problema que o Vídeo Resolve: {briefing.get('mensagem_dor')}
-- Público-Alvo: {briefing.get('publico')}
-- Tom de Voz: {briefing.get('tom')}
+- Público-Alvo e Tom de Voz: {briefing.get('publico')}
 - Referências Culturais/Pop / Inspirações: {briefing.get('referencias')}
 - Duração Estimada: {briefing.get('duracao')}
 - Chamada para Ação (CTA): {briefing.get('cta')}

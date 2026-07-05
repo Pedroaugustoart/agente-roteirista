@@ -828,3 +828,37 @@ input[type="text"]:focus, textarea:focus {
     margin-top: 16px;
     text-align: center;
 }
+
+/* Estilos de Autenticação Google */
+.auth-divider {
+    display: flex;
+    align-items: center;
+    text-align: center;
+    color: var(--roit-text-muted);
+    font-size: 11px;
+    margin: 8px 0;
+    text-transform: uppercase;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+    content: '';
+    flex: 1;
+    border-bottom: var(--border-roit-thin);
+}
+
+.auth-divider:not(:empty)::before {
+    margin-right: .75em;
+}
+
+.auth-divider:not(:empty)::after {
+    margin-left: .75em;
+}
+
+.google-signin-wrapper {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    margin-top: 4px;
+}
+
