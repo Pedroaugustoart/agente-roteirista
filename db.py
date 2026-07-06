@@ -12,7 +12,6 @@ USING_POSTGRES = DATABASE_URL is not None and (DATABASE_URL.startswith("postgres
 def get_db_connection():
     if USING_POSTGRES:
         import pg8000.dbapi
-        # Modifica postgres:// para postgresql:// se necessário para compatibilidade
         url_str = DATABASE_URL
         if url_str.startswith("postgres://"):
             url_str = url_str.replace("postgres://", "postgresql://", 1)
@@ -24,7 +23,6 @@ def get_db_connection():
         hostname = url.hostname
         port = url.port or 5432
         
-        # Conecta no PostgreSQL usando pg8000
         conn = pg8000.dbapi.connect(
             user=username,
             password=password,
@@ -34,7 +32,6 @@ def get_db_connection():
         )
         return conn
     else:
-        # Conecta no SQLite local
         db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "roit_database.db")
         conn = sqlite3.connect(db_path)
         return conn
@@ -45,12 +42,11 @@ def execute_query(cursor, query, params=()):
     caso o banco de dados ativo seja o PostgreSQL.
     """
     if USING_POSTGRES:
-        # Substitui os placeholders de estilo SQLite '?' por placeholders estilo PostgreSQL '%s'
         query = query.replace("?", "%s")
     cursor.execute(query, params)
 
 def get_row_dict(cursor, row):
-    """Converte uma linha de resultado em dicionário baseando-se no cursor.description."""
+    """Converte uma linha de resultado em dicionário."""
     if not row:
         return None
     columns = [col[0] for col in cursor.description]
@@ -67,9 +63,6 @@ def init_db():
     """Inicializa as tabelas do banco de dados se não existirem."""
     conn = get_db_connection()
     cursor = conn.cursor()
-    
-    # Diferença de sintaxe: no PostgreSQL, TEXT PRIMARY KEY é idêntico
-    # mas a tabela deve ser criada de forma compatível.
     
     # Tabela de Usuários
     execute_query(cursor, """
@@ -97,6 +90,19 @@ def init_db():
     )
     """)
     
+    # Tabela de Conhecimento do Usuário (RAG isolado)
+    execute_query(cursor, """
+    CREATE TABLE IF NOT EXISTS conhecimento_usuario (
+        id TEXT PRIMARY KEY,
+        usuario_id TEXT NOT NULL,
+        nome_arquivo TEXT NOT NULL,
+        categoria TEXT NOT NULL,
+        conteudo_texto TEXT NOT NULL,
+        data_criacao TEXT NOT NULL,
+        FOREIGN KEY (usuario_id) REFERENCES usuarios (id) ON DELETE CASCADE
+    )
+    """)
+    
     conn.commit()
     conn.close()
     db_type = "PostgreSQL (Remoto)" if USING_POSTGRES else "SQLite (Local)"
@@ -117,7 +123,6 @@ def registrar_usuario(username, password):
     conn = get_db_connection()
     cursor = conn.cursor()
     
-    # Verifica se já existe
     execute_query(cursor, "SELECT id FROM usuarios WHERE username = ?", (username,))
     if cursor.fetchone():
         conn.close()
@@ -167,17 +172,13 @@ def verificar_usuario(username, password):
     return None
 
 def obter_ou_criar_usuario_google(email, username):
-    """
-    Retorna o user_id para um usuário do Google Sign-In. 
-    Se o usuário não existir no banco de dados, cria-o.
-    """
+    """Retorna o user_id para um usuário do Google Sign-In."""
     email = email.strip().lower()
     username = username.strip().lower()
     
     conn = get_db_connection()
     cursor = conn.cursor()
     
-    # Verifica se já existe pelo username (que para usuários Google será baseado no email)
     execute_query(cursor, "SELECT id FROM usuarios WHERE username = ?", (username,))
     row = cursor.fetchone()
     
@@ -186,7 +187,6 @@ def obter_ou_criar_usuario_google(email, username):
         user_id = row_dict['id']
     else:
         user_id = str(uuid.uuid4())
-        # Como o login é via Google OAuth, não usamos senha local. Marcamos nos campos de senha.
         salt = "GOOGLE_OAUTH"
         password_hash = "GOOGLE_OAUTH"
         data_criacao = datetime.now().isoformat()
@@ -203,6 +203,105 @@ def obter_ou_criar_usuario_google(email, username):
             
     conn.close()
     return user_id
+
+# --- FUNÇÕES DE CONTROLE DE CONHECIMENTO PERSONALIZADO (RAG) ---
+
+def salvar_conhecimento_usuario(usuario_id, nome_arquivo, categoria, conteudo_texto):
+    """Salva um novo documento de conhecimento para o usuário."""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    conhecimento_id = str(uuid.uuid4())
+    data_criacao = datetime.now().isoformat()
+    
+    try:
+        execute_query(
+            cursor,
+            "INSERT INTO conhecimento_usuario (id, usuario_id, nome_arquivo, categoria, conteudo_texto, data_criacao) VALUES (?, ?, ?, ?, ?, ?)",
+            (conhecimento_id, usuario_id, nome_arquivo, categoria, conteudo_texto, data_criacao)
+        )
+        conn.commit()
+        success_id = conhecimento_id
+    except Exception as e:
+        print(f"Erro ao salvar conhecimento do usuário: {e}")
+        success_id = None
+    finally:
+        conn.close()
+        
+    return success_id
+
+def listar_conhecimento_usuario(usuario_id):
+    """Retorna a lista de documentos de conhecimento de um usuário."""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    execute_query(
+        cursor,
+        "SELECT id, nome_arquivo, categoria, data_criacao FROM conhecimento_usuario WHERE usuario_id = ? ORDER BY data_criacao DESC",
+        (usuario_id,)
+    )
+    rows = cursor.fetchall()
+    dicts = get_rows_list(cursor, rows)
+    conn.close()
+    
+    # Formata a data para visualização
+    for d in dicts:
+        try:
+            iso_str = d['data_criacao']
+            if "." in iso_str:
+                iso_str = iso_str.split(".")[0]
+            dt = datetime.fromisoformat(iso_str)
+            d['data_criacao'] = dt.strftime("%d/%m/%Y %H:%M")
+        except Exception:
+            pass
+            
+    return dicts
+
+def excluir_conhecimento_usuario(conhecimento_id, usuario_id):
+    """Exclui um documento de conhecimento do usuário."""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    try:
+        execute_query(
+            cursor,
+            "DELETE FROM conhecimento_usuario WHERE id = ? AND usuario_id = ?",
+            (conhecimento_id, usuario_id)
+        )
+        conn.commit()
+        success = True
+    except Exception as e:
+        print(f"Erro ao excluir conhecimento: {e}")
+        success = False
+    finally:
+        conn.close()
+        
+    return success
+
+def obter_conteudo_conhecimento_usuario(usuario_id, categoria):
+    """Recupera e concatena todo o texto de conhecimento do usuário daquela categoria."""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    execute_query(
+        cursor,
+        "SELECT nome_arquivo, conteudo_texto FROM conhecimento_usuario WHERE usuario_id = ? AND categoria = ?",
+        (usuario_id, categoria.strip().lower())
+    )
+    rows = cursor.fetchall()
+    dicts = get_rows_list(cursor, rows)
+    conn.close()
+    
+    if not dicts:
+        return ""
+        
+    textos = []
+    for d in dicts:
+        textos.append(f"--- Documento de Treinamento do Usuário ({d['nome_arquivo']}) ---\n{d['conteudo_texto']}")
+        
+    return "\n\n".join(textos)
+
+# --- FUNÇÕES DE SALVAMENTO DE ROTEIROS ---
 
 def salvar_roteiro(usuario_id, titulo, plataforma, categoria, conteudo, briefing_json, roteiro_id=None):
     """Salva ou atualiza um roteiro para o usuário."""
@@ -255,8 +354,6 @@ def listar_roteiros(usuario_id):
     roteiros = []
     for r in roteiros_dicts:
         try:
-            # Tenta converter a string isoformat para exibição amigável
-            # Se a string contiver fuso horário ou outros formatos, removemos milissegundos
             iso_str = r['data_criacao']
             if "." in iso_str:
                 iso_str = iso_str.split(".")[0]

@@ -85,7 +85,6 @@ def google_login():
         return jsonify({"error": "GOOGLE_CLIENT_ID não está configurado no servidor."}), 500
         
     try:
-        # Valida o token JWT emitido pelo login da conta Google do usuário
         idinfo = id_token.verify_oauth2_token(token, google_requests.Request(), client_id)
         
         email = idinfo.get("email")
@@ -93,11 +92,8 @@ def google_login():
             return jsonify({"error": "E-mail não retornado pela conta Google"}), 400
             
         username = email.split("@")[0]
-        
-        # Busca ou cria o usuário na base de dados
         user_id = db.obter_ou_criar_usuario_google(email, username)
         
-        # Registra na sessão
         session["user_id"] = user_id
         session["username"] = username
         
@@ -150,14 +146,12 @@ def generate():
         usuario_id = session["user_id"]
         session_id = str(uuid.uuid4())
         
-        # Gera o roteiro pelo Gemini
-        script = agent.criar_sessao_chat(session_id, briefing)
+        # Gera o roteiro pelo Gemini passando o usuario_id para o RAG isolado
+        script = agent.criar_sessao_chat(session_id, briefing, usuario_id=usuario_id)
         
-        # Gera um título amigável baseado no objetivo ou dor
         objetivo = briefing.get("objetivo", "")
         titulo = (objetivo[:30] + "...") if len(objetivo) > 30 else (objetivo or f"Roteiro {briefing.get('tipo', '').capitalize()}")
         
-        # Salva o roteiro no banco de dados SQLite/PostgreSQL
         roteiro_id = db.salvar_roteiro(
             usuario_id=usuario_id,
             titulo=titulo,
@@ -167,7 +161,6 @@ def generate():
             briefing_json=briefing
         )
         
-        # Salva uma cópia local de backup por segurança
         salvar_roteiro_local(script, briefing)
         
         return jsonify({
@@ -198,12 +191,9 @@ def chat():
             
         usuario_id = session["user_id"]
         
-        # Se a sessão já estiver ativa em memória, usamos a refinação simples
         if session_id in agent.active_chats:
             script = agent.enviar_mensagem_chat(session_id, message)
         else:
-            # Caso contrário (sessão inativa ou roteiro carregado do histórico),
-            # precisamos restaurar o contexto a partir do banco de dados
             if not roteiro_id:
                 return jsonify({"error": "ID do roteiro ausente para restauração da sessão"}), 400
                 
@@ -215,10 +205,10 @@ def chat():
                 session_id=session_id,
                 briefing=roteiro_db["briefing"],
                 roteiro_anterior=roteiro_db["conteudo"],
-                mensagem=message
+                mensagem=message,
+                usuario_id=usuario_id
             )
             
-        # Atualiza o roteiro no banco de dados com a nova versão refinada
         if roteiro_id:
             roteiro_db = db.obter_roteiro(roteiro_id, usuario_id)
             if roteiro_db:
@@ -252,6 +242,90 @@ def get_history_item(roteiro_id):
     if not roteiro:
         return jsonify({"error": "Roteiro não encontrado"}), 404
     return jsonify({"roteiro": roteiro})
+
+# --- ROTAS DE GESTÃO DE CONHECIMENTOS (UPLOAD/LISTA/DELETAR) ---
+
+@app.route("/api/conhecimento/upload", methods=["POST"])
+def upload_conhecimento():
+    if "user_id" not in session:
+        return jsonify({"error": "Não autorizado"}), 401
+        
+    categoria = request.form.get("categoria")
+    if not categoria or categoria not in ["storytelling", "viral", "analise", "educativo"]:
+        return jsonify({"error": "Categoria inválida ou ausente"}), 400
+        
+    if 'file' not in request.files:
+        return jsonify({"error": "Nenhum arquivo enviado"}), 400
+        
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({"error": "Nome do arquivo vazio"}), 400
+        
+    usuario_id = session["user_id"]
+    nome_arquivo = file.filename
+    ext = os.path.splitext(nome_arquivo)[1].lower()
+    
+    conteudo_texto = ""
+    
+    try:
+        if ext == '.pdf':
+            from pypdf import PdfReader
+            reader = PdfReader(file)
+            paginas_texto = []
+            for page in reader.pages:
+                txt = page.extract_text()
+                if txt:
+                    paginas_texto.append(txt)
+            conteudo_texto = "\n".join(paginas_texto)
+            if not conteudo_texto.strip():
+                return jsonify({"error": "Não foi possível extrair texto legível deste PDF."}), 400
+        elif ext in ['.txt', '.md']:
+            conteudo_texto = file.read().decode('utf-8', errors='ignore')
+        else:
+            return jsonify({"error": "Formato de arquivo não suportado. Apenas PDF, TXT ou MD."}), 400
+            
+        conhecimento_id = db.salvar_conhecimento_usuario(
+            usuario_id=usuario_id,
+            nome_arquivo=nome_arquivo,
+            categoria=categoria,
+            conteudo_texto=conteudo_texto
+        )
+        
+        if conhecimento_id:
+            return jsonify({
+                "message": "Treinamento integrado com sucesso!",
+                "documento": {
+                    "id": conhecimento_id,
+                    "nome_arquivo": nome_arquivo,
+                    "categoria": categoria
+                }
+            })
+        else:
+            return jsonify({"error": "Erro ao salvar o documento no banco de dados."}), 500
+            
+    except Exception as e:
+        print(f"Erro no processamento do arquivo de treinamento: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/api/conhecimento", methods=["GET"])
+def list_conhecimento():
+    if "user_id" not in session:
+        return jsonify({"error": "Não autorizado"}), 401
+    documentos = db.listar_conhecimento_usuario(session["user_id"])
+    return jsonify({"documentos": documentos})
+
+@app.route("/api/conhecimento/<conhecimento_id>", methods=["DELETE"])
+def delete_conhecimento(conhecimento_id):
+    if "user_id" not in session:
+        return jsonify({"error": "Não autorizado"}), 401
+        
+    success = db.excluir_conhecimento_usuario(conhecimento_id, session["user_id"])
+    if success:
+        return jsonify({"message": "Documento de treinamento excluído com sucesso."})
+    else:
+        return jsonify({"error": "Erro ao excluir documento de treinamento."}), 500
+
+# --- ROTA DE DOWNLOADS ---
 
 @app.route("/api/download", methods=["POST"])
 def download():
