@@ -14,10 +14,11 @@ def get_gemini_client():
     """
     Inicializa e retorna o cliente oficial do Google GenAI.
     """
-    if not GEMINI_API_KEY:
-        # Se não houver chave no .env, tenta pegar do ambiente diretamente
-        # Se ainda assim não houver, levanta um aviso ou erro apropriado
-        pass
+    if not GEMINI_API_KEY or GEMINI_API_KEY in ["sua_chave_aqui", "seu_token_aqui", ""]:
+        # Se estiver em produção e não houver chave, falha imediatamente (Fail Fast)
+        if "PORT" in os.environ:
+            raise RuntimeError("⚠️ ERRO CRÍTICO (FAIL-FAST): GEMINI_API_KEY não configurada no ambiente de produção!")
+        # Localmente apenas lança o erro na hora de usar
     
     try:
         # O cliente automaticamente busca a variável de ambiente GEMINI_API_KEY se não passarmos api_key.

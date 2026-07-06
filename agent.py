@@ -1,5 +1,6 @@
 import os
 import numpy as np
+from functools import lru_cache
 from google.genai import types
 from config import get_gemini_client, get_model_name
 import db
@@ -22,10 +23,12 @@ class ScriptAgent:
         except Exception as e:
             raise RuntimeError(f"Erro ao ler o arquivo '{caminho}': {e}")
 
+    @lru_cache(maxsize=4)
     def carregar_system_prompt(self):
         caminho_sys = os.path.join(self.prompts_dir, "system_prompt.txt")
         return self._ler_arquivo(caminho_sys)
 
+    @lru_cache(maxsize=16)
     def carregar_template(self, tipo):
         nome_arquivo = tipo
         if tipo == "analise":
@@ -36,6 +39,7 @@ class ScriptAgent:
             return self._ler_arquivo(caminho_template)
         return "Nenhum template estrutural definido para esta categoria."
 
+    @lru_cache(maxsize=16)
     def carregar_conhecimento_categoria(self, categoria):
         """
         Lê todos os arquivos de texto (.txt, .md) e PDF (.pdf) localizados

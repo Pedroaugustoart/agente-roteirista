@@ -8,6 +8,11 @@ from flask import Flask, request, jsonify, make_response, render_template, sessi
 from dotenv import load_dotenv
 from google.oauth2 import id_token
 from google.auth.transport import requests as google_requests
+import logging
+
+# Configuração de Logging (Achado 005)
+logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(levelname)s] %(message)s')
+logger = logging.getLogger("RoitApp")
 
 # Carregar variáveis de ambiente
 load_dotenv()
@@ -40,9 +45,7 @@ def inicializar_agente():
     global agent
     api_key = os.getenv("GEMINI_API_KEY")
     if not api_key or api_key in ["sua_chave_aqui", "seu_token_aqui", ""]:
-        print("\n" + "!"*60)
-        print("⚠️ AVISO: GEMINI_API_KEY não configurada no seu arquivo .env!")
-        print("!"*60 + "\n")
+        logger.warning("GEMINI_API_KEY não configurada no seu arquivo .env!")
     agent = ScriptAgent()
     db.init_db()
 
@@ -136,7 +139,7 @@ def google_login():
         
         return jsonify({"message": "Login com Google realizado com sucesso!", "user": {"id": user_id, "username": final_username}})
     except Exception as e:
-        print(f"Erro no login Google: {e}")
+        logger.error(f"Erro no login Google: {e}")
         return jsonify({"error": "Token do Google inválido ou expirado."}), 401
 
 @app.route("/api/logout", methods=["POST"])
@@ -187,7 +190,7 @@ def generate():
         
         return jsonify({"session_id": session_id, "roteiro_id": roteiro_id, "script": script})
     except Exception as e:
-        print(f"Erro na geração do roteiro: {e}")
+        logger.error(f"Erro na geração do roteiro: {e}")
         return jsonify({"error": "Não foi possível gerar o roteiro no momento."}), 500
 
 @app.route("/api/chat", methods=["POST"])
@@ -242,7 +245,7 @@ def chat():
                 )
         return jsonify({"script": script})
     except Exception as e:
-        print(f"Erro no chat de refinação: {e}")
+        logger.error(f"Erro no chat de refinação: {e}")
         return jsonify({"error": "Erro ao refinar o roteiro com a inteligência artificial."}), 500
 
 @app.route("/api/history", methods=["GET"])
@@ -319,7 +322,7 @@ def upload_conhecimento():
                     response = client.models.embed_content(model="text-embedding-004", contents=c_text)
                     chunks_dados.append({"texto": c_text, "embedding": response.embeddings[0].values})
                 except Exception as e:
-                    print(f"Erro ao gerar embedding: {e}")
+                    logger.error(f"Erro ao gerar embedding: {e}")
                     
             if chunks_dados:
                 db.salvar_chunks_usuario(usuario_id, conhecimento_id, categoria, chunks_dados)
@@ -330,7 +333,7 @@ def upload_conhecimento():
             })
         return jsonify({"error": "Erro ao registrar o documento na base."}), 500
     except Exception as e:
-        print(f"Erro no processamento do upload: {e}")
+        logger.error(f"Erro no processamento do upload: {e}")
         return jsonify({"error": "Não foi possível processar o arquivo enviado."}), 500
 
 @app.route("/api/conhecimento", methods=["GET"])
@@ -369,7 +372,7 @@ def salvar_roteiro_local(roteiro, briefing):
         with open(os.path.join(diretorio_saida, nome_arquivo), "w", encoding="utf-8") as f:
             f.write(f"# Roteiro: {briefing.get('tipo', '')}\n\n{roteiro}")
     except Exception as e:
-        print(f"Aviso ao salvar backup local: {e}")
+        logger.warning(f"Aviso ao salvar backup local: {e}")
 
 def open_browser(port):
     webbrowser.open_new(f"http://127.0.0.1:{port}")
@@ -380,9 +383,9 @@ if __name__ == "__main__":
     
     if not is_production:
         Timer(1.5, lambda: open_browser(port)).start()
-        print(f"\n🚀 Servidor de Desenvolvimento rodando: http://127.0.0.1:{port}\n")
+        logger.info(f"🚀 Servidor de Desenvolvimento rodando: http://127.0.0.1:{port}")
         app.run(host="127.0.0.1", port=port, debug=True)
     else:
-        print(f"\n🚀 Servidor de Produção iniciado na porta {port}...\n")
+        logger.info(f"🚀 Servidor de Produção iniciado na porta {port}...")
         # AVISO: Na nuvem, acione via Gunicorn, ex: gunicorn -w 4 -b 0.0.0.0:$PORT app:app
         app.run(host="0.0.0.0", port=port, debug=False)

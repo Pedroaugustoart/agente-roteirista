@@ -11,31 +11,55 @@ from datetime import datetime
 DATABASE_URL = os.getenv("DATABASE_URL")
 USING_POSTGRES = DATABASE_URL is not None and (DATABASE_URL.startswith("postgres://") or DATABASE_URL.startswith("postgresql://"))
 
+pg_pool = None
+
+class PooledConnectionWrapper:
+    """Wrapper para interceptar o conn.close() e devolver a conexão ao Pool do psycopg2."""
+    def __init__(self, pool, conn):
+        self.pool = pool
+        self.conn = conn
+    def cursor(self):
+        return self.conn.cursor()
+    def commit(self):
+        self.conn.commit()
+    def rollback(self):
+        self.conn.rollback()
+    def close(self):
+        self.pool.putconn(self.conn)
+
 def get_db_connection():
+    global pg_pool
     if USING_POSTGRES:
-        import pg8000.dbapi
-        url_str = DATABASE_URL
-        if url_str.startswith("postgres://"):
-            url_str = url_str.replace("postgres://", "postgresql://", 1)
+        if pg_pool is None:
+            import psycopg2
+            from psycopg2 import pool
+            url_str = DATABASE_URL
+            if url_str.startswith("postgres://"):
+                url_str = url_str.replace("postgres://", "postgresql://", 1)
+                
+            url = urllib.parse.urlparse(url_str)
+            username = url.username
+            password = url.password
+            database = url.path[1:]
+            hostname = url.hostname
+            port = url.port or 5432
             
-        url = urllib.parse.urlparse(url_str)
-        username = url.username
-        password = url.password
-        database = url.path[1:]
-        hostname = url.hostname
-        port = url.port or 5432
+            # Cria um pool de conexões com mínimo de 1 e máximo de 10 conexões simultâneas
+            pg_pool = psycopg2.pool.SimpleConnectionPool(
+                1, 10,
+                user=username,
+                password=password,
+                host=hostname,
+                port=port,
+                database=database
+            )
         
-        conn = pg8000.dbapi.connect(
-            user=username,
-            password=password,
-            host=hostname,
-            port=port,
-            database=database
-        )
-        return conn
+        # Pega uma conexão do pool e envelopa
+        conn = pg_pool.getconn()
+        return PooledConnectionWrapper(pg_pool, conn)
     else:
         db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "roit_database.db")
-        conn = sqlite3.connect(db_path)
+        conn = sqlite3.connect(db_path, check_same_thread=False)
         return conn
 
 def execute_query(cursor, query, params=()):
@@ -129,6 +153,10 @@ def init_db():
         FOREIGN KEY (conhecimento_id) REFERENCES conhecimento_usuario (id) ON DELETE CASCADE
     )
     """)
+    # Índices de performance para buscas frequentes (Achado 008)
+    execute_query(cursor, "CREATE INDEX IF NOT EXISTS idx_roteiros_usuario ON roteiros(usuario_id)")
+    execute_query(cursor, "CREATE INDEX IF NOT EXISTS idx_conhecimento_usuario ON conhecimento_usuario(usuario_id)")
+    execute_query(cursor, "CREATE INDEX IF NOT EXISTS idx_chunks_usuario_categoria ON conhecimento_chunks(usuario_id, categoria)")
     
     conn.commit()
     conn.close()
