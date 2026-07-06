@@ -1,6 +1,7 @@
 import os
 import uuid
 import webbrowser
+from functools import wraps
 from threading import Timer
 from datetime import datetime
 from flask import Flask, request, jsonify, make_response, render_template, session
@@ -15,10 +16,24 @@ from agent import ScriptAgent
 import db
 
 app = Flask(__name__, template_folder="templates", static_folder="static")
+
+# --- 1. CONFIGURAÇÕES DE SEGURANÇA DO SERVIDOR ---
 secret_key = os.getenv("FLASK_SECRET_KEY")
-if not secret_key and "PORT" in os.environ:
-    raise RuntimeError("⚠️ ERRO CRÍTICO DE SEGURANÇA: FLASK_SECRET_KEY não configurada em produção!")
-app.secret_key = secret_key or "roit_secret_key_default_123_456"
+is_production = "PORT" in os.environ
+
+if is_production and not secret_key:
+    raise RuntimeError("⚠️ ERRO CRÍTICO: FLASK_SECRET_KEY não configurada em ambiente de produção!")
+
+app.secret_key = secret_key or "roit_secret_key_dev_local_12345"
+
+# Proteção contra ataques CSRF e roubo de cookies
+app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+app.config["SESSION_COOKIE_SECURE"] = is_production  # Apenas HTTPS em produção
+app.config["SESSION_COOKIE_HTTPONLY"] = True
+
+# Proteção contra ataque de negação de serviço (DoS): Limite de 16MB para uploads
+app.config["MAX_CONTENT_LENGTH"] = 16 * 1024 * 1024
+
 agent = None
 
 def inicializar_agente():
@@ -27,57 +42,74 @@ def inicializar_agente():
     if not api_key or api_key in ["sua_chave_aqui", "seu_token_aqui", ""]:
         print("\n" + "!"*60)
         print("⚠️ AVISO: GEMINI_API_KEY não configurada no seu arquivo .env!")
-        print("Por favor, adicione sua chave de API para o roteirista Roit funcionar.")
         print("!"*60 + "\n")
     agent = ScriptAgent()
-    # Inicializa as tabelas do banco de dados SQLite/PostgreSQL
     db.init_db()
+
+# --- 2. DECORADOR DE AUTENTICAÇÃO REUTILIZÁVEL ---
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if "user_id" not in session:
+            return jsonify({"error": "Sessão expirada ou não autorizada. Faça login novamente."}), 401
+        return f(*args, **kwargs)
+    return decorated_function
+
+# --- 3. CONTROLE DE RATE LIMIT SIMPLES EM MEMÓRIA (Evita abuso financeiro) ---
+# Em escala corporativa alta, substitua por Flask-Limiter integrado com Redis
+rate_limits = {}
+def rate_limit(segundos_entre_chamadas=5):
+    def decorator(f):
+        @wraps(f)
+        def wrapped(*args, **kwargs):
+            user_id = session.get("user_id", request.remote_addr)
+            agora = datetime.now().timestamp()
+            ultimo_acesso = rate_limits.get(user_id, 0)
+            
+            if agora - ultimo_acesso < segundos_entre_chamadas:
+                return jsonify({"error": "Muitas requisições seguidas. Aguarde alguns segundos."}), 429
+                
+            rate_limits[user_id] = agora
+            return f(*args, **kwargs)
+        return wrapped
+    return decorator
 
 @app.route("/")
 def index():
-    # Injeta a chave do Google Client ID dinamicamente no HTML
     return render_template("index.html", google_client_id=os.getenv("GOOGLE_CLIENT_ID", ""))
 
 # --- ROTAS DE AUTENTICAÇÃO ---
 
 @app.route("/api/register", methods=["POST"])
 def register():
-    data = request.json
-    username = data.get("username")
-    password = data.get("password")
+    data = request.json or {}
+    username = str(data.get("username", "")).strip()
+    password = str(data.get("password", ""))
     
-    if not username or not password:
-        return jsonify({"error": "Usuário e senha são obrigatórios"}), 400
+    if len(username) < 3 or len(password) < 6:
+        return jsonify({"error": "Usuário (mín. 3 caracteres) e senha (mín. 6 caracteres) são obrigatórios"}), 400
         
-    success = db.registrar_usuario(username, password)
-    if success:
+    if db.registrar_usuario(username, password):
         return jsonify({"message": "Usuário cadastrado com sucesso!"})
-    else:
-        return jsonify({"error": "Nome de usuário já está em uso"}), 409
+    return jsonify({"error": "Nome de usuário já está em uso"}), 409
 
 @app.route("/api/login", methods=["POST"])
 def login():
-    data = request.json
+    data = request.json or {}
     username = data.get("username")
     password = data.get("password")
     
-    if not username or not password:
-        return jsonify({"error": "Usuário e senha são obrigatórios"}), 400
-        
     user = db.verificar_usuario(username, password)
     if user:
+        session.clear() # Evita fixação de sessão
         session["user_id"] = user["id"]
         session["username"] = user["username"]
-        return jsonify({
-            "message": "Login realizado com sucesso!",
-            "user": user
-        })
-    else:
-        return jsonify({"error": "Usuário ou senha inválidos"}), 401
+        return jsonify({"message": "Login realizado com sucesso!", "user": user})
+    return jsonify({"error": "Usuário ou senha inválidos"}), 401
 
 @app.route("/api/login/google", methods=["POST"])
 def google_login():
-    data = request.json
+    data = request.json or {}
     token = data.get("credential")
     
     if not token:
@@ -85,35 +117,27 @@ def google_login():
         
     client_id = os.getenv("GOOGLE_CLIENT_ID")
     if not client_id:
-        return jsonify({"error": "GOOGLE_CLIENT_ID não está configurado no servidor."}), 500
+        return jsonify({"error": "Configuração OAuth ausente no servidor."}), 500
         
     try:
         idinfo = id_token.verify_oauth2_token(token, google_requests.Request(), client_id)
-        
         email = idinfo.get("email")
         sub = idinfo.get("sub")
+        
         if not email or not sub:
-            return jsonify({"error": "E-mail ou ID não retornado pela conta Google"}), 400
+            return jsonify({"error": "Dados incompletos retornados pelo Google"}), 400
             
         username = email.split("@")[0]
         user_id, final_username = db.obter_ou_criar_usuario_google(email, username, sub)
         
+        session.clear()
         session["user_id"] = user_id
         session["username"] = final_username
         
-        return jsonify({
-            "message": "Login com Google realizado com sucesso!",
-            "user": {
-                "id": user_id,
-                "username": final_username
-            }
-        })
-    except ValueError as e:
-        print(f"Erro na validação do token Google: {e}")
-        return jsonify({"error": "Token de autenticação do Google inválido ou expirado."}), 401
+        return jsonify({"message": "Login com Google realizado com sucesso!", "user": {"id": user_id, "username": final_username}})
     except Exception as e:
-        print(f"Erro crítico no login Google: {e}")
-        return jsonify({"error": "Ocorreu um erro interno no servidor durante a autenticação."}), 500
+        print(f"Erro no login Google: {e}")
+        return jsonify({"error": "Token do Google inválido ou expirado."}), 401
 
 @app.route("/api/logout", methods=["POST"])
 def logout():
@@ -123,34 +147,26 @@ def logout():
 @app.route("/api/session", methods=["GET"])
 def get_session():
     if "user_id" in session:
-        return jsonify({
-            "logged_in": True,
-            "user": {
-                "id": session["user_id"],
-                "username": session["username"]
-            }
-        })
+        return jsonify({"logged_in": True, "user": {"id": session["user_id"], "username": session["username"]}})
     return jsonify({"logged_in": False})
 
 # --- ROTAS DE GERAÇÃO E HISTÓRICO ---
 
 @app.route("/api/generate", methods=["POST"])
+@login_required
+@rate_limit(segundos_entre_chamadas=10)  # Trava contra flood de gastos na IA
 def generate():
-    if "user_id" not in session:
-        return jsonify({"error": "Não autorizado. Por favor, faça login."}), 401
-        
     if not agent:
-        return jsonify({"error": "Agente não inicializado"}), 500
+        return jsonify({"error": "Motor de IA indisponível no momento."}), 503
         
     try:
         briefing = request.json
         if not briefing:
-            return jsonify({"error": "Dados do briefing ausentes"}), 400
+            return jsonify({"error": "Dados de briefing inválidos"}), 400
             
         usuario_id = session["user_id"]
         session_id = str(uuid.uuid4())
         
-        # Gera o roteiro pelo Gemini passando o usuario_id para o RAG isolado
         script = agent.criar_sessao_chat(session_id, briefing, usuario_id=usuario_id)
         
         objetivo = briefing.get("objetivo", "")
@@ -165,33 +181,33 @@ def generate():
             briefing_json=briefing
         )
         
-        salvar_roteiro_local(script, briefing)
+        # Só grava no disco de backup se rodar localmente no PC
+        if not is_production:
+            salvar_roteiro_local(script, briefing)
         
-        return jsonify({
-            "session_id": session_id,
-            "roteiro_id": roteiro_id,
-            "script": script
-        })
+        return jsonify({"session_id": session_id, "roteiro_id": roteiro_id, "script": script})
     except Exception as e:
         print(f"Erro na geração do roteiro: {e}")
-        return jsonify({"error": "Ocorreu um erro interno no servidor ao gerar o roteiro."}), 500
+        return jsonify({"error": "Não foi possível gerar o roteiro no momento."}), 500
 
 @app.route("/api/chat", methods=["POST"])
+@login_required
+@rate_limit(segundos_entre_chamadas=4)
 def chat():
-    if "user_id" not in session:
-        return jsonify({"error": "Não autorizado. Por favor, faça login."}), 401
-        
     if not agent:
-        return jsonify({"error": "Agente não inicializado"}), 500
+        return jsonify({"error": "Motor de IA indisponível no momento."}), 503
         
     try:
-        data = request.json
+        data = request.json or {}
         session_id = data.get("session_id")
-        message = data.get("message")
+        message = str(data.get("message", "")).strip()
         roteiro_id = data.get("roteiro_id")
         
         if not session_id or not message:
-            return jsonify({"error": "Parâmetros session_id ou message ausentes"}), 400
+            return jsonify({"error": "Parâmetros inválidos ou mensagem vazia"}), 400
+            
+        if len(message) > 4000:
+            return jsonify({"error": "A mensagem de refinação é muito longa (máx. 4000 caracteres)."}), 400
             
         usuario_id = session["user_id"]
         
@@ -199,11 +215,10 @@ def chat():
             script = agent.enviar_mensagem_chat(session_id, message)
         else:
             if not roteiro_id:
-                return jsonify({"error": "ID do roteiro ausente para restauração da sessão"}), 400
-                
+                return jsonify({"error": "ID de roteiro ausente para restaurar sessão antiga."}), 400
             roteiro_db = db.obter_roteiro(roteiro_id, usuario_id)
             if not roteiro_db:
-                return jsonify({"error": "Roteiro não encontrado no histórico"}), 404
+                return jsonify({"error": "Roteiro não encontrado ou sem permissão"}), 404
                 
             script = agent.enviar_mensagem_refinacao_historico(
                 session_id=session_id,
@@ -225,88 +240,72 @@ def chat():
                     briefing_json=roteiro_db["briefing"],
                     roteiro_id=roteiro_id
                 )
-        
         return jsonify({"script": script})
     except Exception as e:
         print(f"Erro no chat de refinação: {e}")
-        return jsonify({"error": "Ocorreu um erro interno no servidor durante o chat."}), 500
+        return jsonify({"error": "Erro ao refinar o roteiro com a inteligência artificial."}), 500
 
 @app.route("/api/history", methods=["GET"])
+@login_required
 def list_history():
-    if "user_id" not in session:
-        return jsonify({"error": "Não autorizado"}), 401
     roteiros = db.listar_roteiros(session["user_id"])
     return jsonify({"roteiros": roteiros})
 
 @app.route("/api/history/<roteiro_id>", methods=["GET"])
+@login_required
 def get_history_item(roteiro_id):
-    if "user_id" not in session:
-        return jsonify({"error": "Não autorizado"}), 401
     roteiro = db.obter_roteiro(roteiro_id, session["user_id"])
     if not roteiro:
         return jsonify({"error": "Roteiro não encontrado"}), 404
     return jsonify({"roteiro": roteiro})
 
-# --- ROTAS DE GESTÃO DE CONHECIMENTOS (UPLOAD/LISTA/DELETAR) ---
+# --- ROTAS DE GESTÃO DE CONHECIMENTO (RAG) ---
 
 @app.route("/api/conhecimento/upload", methods=["POST"])
+@login_required
+@rate_limit(segundos_entre_chamadas=15) # Evita sobrecarga de API de embeddings
 def upload_conhecimento():
-    if "user_id" not in session:
-        return jsonify({"error": "Não autorizado"}), 401
-        
     categoria = request.form.get("categoria")
     if not categoria or categoria not in ["storytelling", "viral", "analise", "educativo"]:
-        return jsonify({"error": "Categoria inválida ou ausente"}), 400
+        return jsonify({"error": "Categoria inválida"}), 400
         
     if 'file' not in request.files:
         return jsonify({"error": "Nenhum arquivo enviado"}), 400
         
     file = request.files['file']
-    if file.filename == '':
-        return jsonify({"error": "Nome do arquivo vazio"}), 400
+    if not file or file.filename == '':
+        return jsonify({"error": "Arquivo vazio"}), 400
         
     usuario_id = session["user_id"]
     nome_arquivo = file.filename
     ext = os.path.splitext(nome_arquivo)[1].lower()
     
-    conteudo_texto = ""
-    
     try:
         if ext == '.pdf':
             from pypdf import PdfReader
             reader = PdfReader(file)
-            paginas_texto = []
-            for page in reader.pages:
-                txt = page.extract_text()
-                if txt:
-                    paginas_texto.append(txt)
+            paginas_texto = [page.extract_text() for page in reader.pages if page.extract_text()]
             conteudo_texto = "\n".join(paginas_texto)
-            if not conteudo_texto.strip():
-                return jsonify({"error": "Não foi possível extrair texto legível deste PDF."}), 400
         elif ext in ['.txt', '.md']:
             conteudo_texto = file.read().decode('utf-8', errors='ignore')
         else:
-            return jsonify({"error": "Formato de arquivo não suportado. Apenas PDF, TXT ou MD."}), 400
+            return jsonify({"error": "Formato não suportado. Envie PDF, TXT ou MD."}), 400
             
-        conhecimento_id = db.salvar_conhecimento_usuario(
-            usuario_id=usuario_id,
-            nome_arquivo=nome_arquivo,
-            categoria=categoria,
-            conteudo_texto=conteudo_texto
-        )
+        if not conteudo_texto or len(conteudo_texto.strip()) < 20:
+            return jsonify({"error": "O arquivo enviado não possui texto legível suficiente."}), 400
+            
+        conhecimento_id = db.salvar_conhecimento_usuario(usuario_id, nome_arquivo, categoria, conteudo_texto)
         
         if conhecimento_id:
-            # --- CHUNKING E EMBEDDINGS (RAG) ---
+            # Chunking com limite de segurança para evitar timeout na nuvem
             chunk_size = 600
             overlap = 100
-            chunks = []
-            
             texto_limpo = conteudo_texto.replace("\n", " ").strip()
+            
+            chunks = []
             start = 0
-            while start < len(texto_limpo):
-                end = start + chunk_size
-                chunk = texto_limpo[start:end]
-                chunks.append(chunk)
+            while start < len(texto_limpo) and len(chunks) < 50:  # Trava máxima de 50 chunks por arquivo
+                chunks.append(texto_limpo[start : start + chunk_size])
                 start += chunk_size - overlap
                 
             chunks_dados = []
@@ -317,116 +316,73 @@ def upload_conhecimento():
                 if not c_text.strip():
                     continue
                 try:
-                    response = client.models.embed_content(
-                        model="text-embedding-004",
-                        contents=c_text
-                    )
-                    # models.embed_content returns an EmbedContentResponse which has an embeddings array of EmbedContentResponse.Embedding
-                    chunks_dados.append({
-                        "texto": c_text,
-                        "embedding": response.embeddings[0].values
-                    })
+                    response = client.models.embed_content(model="text-embedding-004", contents=c_text)
+                    chunks_dados.append({"texto": c_text, "embedding": response.embeddings[0].values})
                 except Exception as e:
-                    print(f"Erro ao gerar embedding do chunk: {e}")
+                    print(f"Erro ao gerar embedding: {e}")
                     
             if chunks_dados:
                 db.salvar_chunks_usuario(usuario_id, conhecimento_id, categoria, chunks_dados)
-            # ------------------------------------
-            
+                
             return jsonify({
                 "message": "Treinamento integrado com sucesso!",
-                "documento": {
-                    "id": conhecimento_id,
-                    "nome_arquivo": nome_arquivo,
-                    "categoria": categoria
-                }
+                "documento": {"id": conhecimento_id, "nome_arquivo": nome_arquivo, "categoria": categoria}
             })
-        else:
-            return jsonify({"error": "Erro ao salvar o documento no banco de dados."}), 500
-            
+        return jsonify({"error": "Erro ao registrar o documento na base."}), 500
     except Exception as e:
-        print(f"Erro no processamento do arquivo de treinamento: {e}")
-        return jsonify({"error": "Ocorreu um erro interno no servidor ao processar o arquivo."}), 500
+        print(f"Erro no processamento do upload: {e}")
+        return jsonify({"error": "Não foi possível processar o arquivo enviado."}), 500
 
 @app.route("/api/conhecimento", methods=["GET"])
+@login_required
 def list_conhecimento():
-    if "user_id" not in session:
-        return jsonify({"error": "Não autorizado"}), 401
     documentos = db.listar_conhecimento_usuario(session["user_id"])
     return jsonify({"documentos": documentos})
 
 @app.route("/api/conhecimento/<conhecimento_id>", methods=["DELETE"])
+@login_required
 def delete_conhecimento(conhecimento_id):
-    if "user_id" not in session:
-        return jsonify({"error": "Não autorizado"}), 401
-        
-    success = db.excluir_conhecimento_usuario(conhecimento_id, session["user_id"])
-    if success:
-        return jsonify({"message": "Documento de treinamento excluído com sucesso."})
-    else:
-        return jsonify({"error": "Erro ao excluir documento de treinamento."}), 500
-
-# --- ROTA DE DOWNLOADS ---
+    if db.excluir_conhecimento_usuario(conhecimento_id, session["user_id"]):
+        return jsonify({"message": "Documento excluído com sucesso."})
+    return jsonify({"error": "Erro ao excluir documento."}), 500
 
 @app.route("/api/download", methods=["POST"])
+@login_required
 def download():
-    try:
-        data = request.json
-        script = data.get("script", "")
-        tipo = data.get("tipo", "roteiro")
-        
-        response = make_response(script)
-        response.headers["Content-Disposition"] = f"attachment; filename=roteiro_{tipo}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md"
-        response.headers["Content-type"] = "text/markdown; charset=utf-8"
-        return response
-    except Exception as e:
-        print(f"Erro no download: {e}")
-        return jsonify({"error": "Ocorreu um erro interno no servidor ao baixar o arquivo."}), 500
+    data = request.json or {}
+    script = data.get("script", "")
+    tipo = data.get("tipo", "roteiro")
+    
+    response = make_response(script)
+    response.headers["Content-Disposition"] = f"attachment; filename=roteiro_{tipo}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md"
+    response.headers["Content-type"] = "text/markdown; charset=utf-8"
+    return response
 
 def salvar_roteiro_local(roteiro, briefing):
-    """Salva uma cópia de backup do roteiro na pasta do projeto."""
+    """Executa apenas localmente na máquina de desenvolvimento."""
     try:
         diretorio_saida = os.path.join(os.path.dirname(os.path.abspath(__file__)), "roteiros_gerados")
         os.makedirs(diretorio_saida, exist_ok=True)
-        
         tipo_sanitizado = briefing.get("tipo", "roteiro").replace(" ", "_").lower()
-        data_str = datetime.now().strftime("%Y%m%d_%H%M%S")
-        nome_arquivo = f"roteiro_{tipo_sanitizado}_{data_str}.md"
-        caminho_arquivo = os.path.join(diretorio_saida, nome_arquivo)
+        nome_arquivo = f"roteiro_{tipo_sanitizado}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md"
         
-        conteudo_completo = f"""# Roteiro Gerado: {briefing.get('tipo', 'roteiro').capitalize()}
-Gerado em: {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}
-Plataforma: {briefing.get('plataforma')}
-Tom de Voz: {briefing.get('tom')}
-
----
-
-{roteiro}
-"""
-        with open(caminho_arquivo, "w", encoding="utf-8") as f:
-            f.write(conteudo_completo)
-        print(f"💾 Cópia de backup salva em: {caminho_arquivo}")
+        with open(os.path.join(diretorio_saida, nome_arquivo), "w", encoding="utf-8") as f:
+            f.write(f"# Roteiro: {briefing.get('tipo', '')}\n\n{roteiro}")
     except Exception as e:
-        print(f"Aviso: Não foi possível salvar cópia local do roteiro: {e}")
+        print(f"Aviso ao salvar backup local: {e}")
 
 def open_browser(port):
     webbrowser.open_new(f"http://127.0.0.1:{port}")
 
 if __name__ == "__main__":
     inicializar_agente()
-    
     port = int(os.environ.get("PORT", 5001))
     
-    if "PORT" not in os.environ:
+    if not is_production:
         Timer(1.5, lambda: open_browser(port)).start()
-        
-        print("\n" + "="*60)
-        print("🚀 Iniciando Servidor Web do Roit...")
-        print("Se o seu navegador não abrir automaticamente, acesse:")
-        print(f"👉 http://127.0.0.1:{port}")
-        print("="*60 + "\n")
+        print(f"\n🚀 Servidor de Desenvolvimento rodando: http://127.0.0.1:{port}\n")
+        app.run(host="127.0.0.1", port=port, debug=True)
     else:
-        print(f"🚀 Iniciando Roit em modo Produção (Nuvem) na porta {port}...")
-    
-    host = "0.0.0.0" if "PORT" in os.environ else "127.0.0.1"
-    app.run(host=host, port=port, debug=False)
+        print(f"\n🚀 Servidor de Produção iniciado na porta {port}...\n")
+        # AVISO: Na nuvem, acione via Gunicorn, ex: gunicorn -w 4 -b 0.0.0.0:$PORT app:app
+        app.run(host="0.0.0.0", port=port, debug=False)

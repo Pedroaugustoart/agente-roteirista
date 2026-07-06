@@ -4,3 +4,4 @@ Flask>=3.0.0
 pypdf>=4.0.0
 pg8000>=1.30.0
 numpy
+gunicorn>=21.2.0
