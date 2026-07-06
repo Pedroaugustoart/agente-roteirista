@@ -1,8 +1,10 @@
 import os
 import sqlite3
-import hashlib
 import uuid
 import json
+import urllib.parse
+from datetime import datetime
+from werkzeug.security import generate_password_hash, check_password_hash
 import urllib.parse
 from datetime import datetime
 
@@ -75,6 +77,17 @@ def init_db():
     )
     """)
     
+    # Migrações para as colunas de Provedor
+    try:
+        execute_query(cursor, "ALTER TABLE usuarios ADD COLUMN auth_provider TEXT DEFAULT 'local'")
+    except Exception:
+        pass # Coluna já existe
+        
+    try:
+        execute_query(cursor, "ALTER TABLE usuarios ADD COLUMN provider_id TEXT")
+    except Exception:
+        pass # Coluna já existe
+        
     # Tabela de Roteiros
     execute_query(cursor, """
     CREATE TABLE IF NOT EXISTS roteiros (
@@ -103,16 +116,24 @@ def init_db():
     )
     """)
     
+    # Tabela de Chunks para Busca Semântica (RAG)
+    execute_query(cursor, """
+    CREATE TABLE IF NOT EXISTS conhecimento_chunks (
+        id TEXT PRIMARY KEY,
+        usuario_id TEXT NOT NULL,
+        conhecimento_id TEXT NOT NULL,
+        categoria TEXT NOT NULL,
+        texto_chunk TEXT NOT NULL,
+        embedding_json TEXT NOT NULL,
+        FOREIGN KEY (usuario_id) REFERENCES usuarios (id) ON DELETE CASCADE,
+        FOREIGN KEY (conhecimento_id) REFERENCES conhecimento_usuario (id) ON DELETE CASCADE
+    )
+    """)
+    
     conn.commit()
     conn.close()
     db_type = "PostgreSQL (Remoto)" if USING_POSTGRES else "SQLite (Local)"
     print(f"💾 Banco de dados {db_type} inicializado com sucesso!")
-
-def _hash_senha(password, salt):
-    """Gera o hash SHA-256 de uma senha usando um salt."""
-    hash_obj = hashlib.sha256()
-    hash_obj.update(password.encode('utf-8') + salt.encode('utf-8'))
-    return hash_obj.hexdigest()
 
 def registrar_usuario(username, password):
     """Cadastra um novo usuário local no banco."""
@@ -129,15 +150,15 @@ def registrar_usuario(username, password):
         return False
         
     user_id = str(uuid.uuid4())
-    salt = os.urandom(16).hex()
-    password_hash = _hash_senha(password, salt)
+    salt = "unused" # Mantido para não quebrar tabelas sem migração destrutiva
+    password_hash = generate_password_hash(password)
     data_criacao = datetime.now().isoformat()
     
     try:
         execute_query(
             cursor,
-            "INSERT INTO usuarios (id, username, password_hash, salt, data_criacao) VALUES (?, ?, ?, ?, ?)",
-            (user_id, username, password_hash, salt, data_criacao)
+            "INSERT INTO usuarios (id, username, password_hash, salt, data_criacao, auth_provider) VALUES (?, ?, ?, ?, ?, ?)",
+            (user_id, username, password_hash, salt, data_criacao, "local")
         )
         conn.commit()
         success = True
@@ -155,7 +176,7 @@ def verificar_usuario(username, password):
     conn = get_db_connection()
     cursor = conn.cursor()
     
-    execute_query(cursor, "SELECT id, username, password_hash, salt FROM usuarios WHERE username = ?", (username,))
+    execute_query(cursor, "SELECT id, username, password_hash FROM usuarios WHERE username = ? AND auth_provider = 'local'", (username,))
     row = cursor.fetchone()
     conn.close()
     
@@ -163,30 +184,36 @@ def verificar_usuario(username, password):
         return None
         
     row_dict = get_row_dict(cursor, row)
-    password_hash = _hash_senha(password, row_dict['salt'])
-    if password_hash == row_dict['password_hash']:
+    if check_password_hash(row_dict['password_hash'], password):
         return {
             "id": row_dict['id'],
             "username": row_dict['username']
         }
     return None
 
-def obter_ou_criar_usuario_google(email, username):
-    """Retorna o user_id para um usuário do Google Sign-In."""
+def obter_ou_criar_usuario_google(email, username, sub):
+    """Retorna o user_id para um usuário do Google Sign-In usando o 'sub'."""
     email = email.strip().lower()
     username = username.strip().lower()
     
     conn = get_db_connection()
     cursor = conn.cursor()
     
-    execute_query(cursor, "SELECT id FROM usuarios WHERE username = ?", (username,))
+    execute_query(cursor, "SELECT id, username FROM usuarios WHERE auth_provider = 'google' AND provider_id = ?", (sub,))
     row = cursor.fetchone()
     
     if row:
         row_dict = get_row_dict(cursor, row)
         user_id = row_dict['id']
+        username = row_dict['username'] # Usa o username salvo
     else:
         user_id = str(uuid.uuid4())
+        
+        # Garante que o username gerado pelo Google não conflite com um local
+        execute_query(cursor, "SELECT id FROM usuarios WHERE username = ?", (username,))
+        if cursor.fetchone():
+            username = f"{username}_{sub[:6]}"
+            
         salt = "GOOGLE_OAUTH"
         password_hash = "GOOGLE_OAUTH"
         data_criacao = datetime.now().isoformat()
@@ -194,15 +221,15 @@ def obter_ou_criar_usuario_google(email, username):
         try:
             execute_query(
                 cursor,
-                "INSERT INTO usuarios (id, username, password_hash, salt, data_criacao) VALUES (?, ?, ?, ?, ?)",
-                (user_id, username, password_hash, salt, data_criacao)
+                "INSERT INTO usuarios (id, username, password_hash, salt, data_criacao, auth_provider, provider_id) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                (user_id, username, password_hash, salt, data_criacao, "google", sub)
             )
             conn.commit()
         except Exception as e:
             print(f"Erro ao criar usuário Google no banco: {e}")
             
     conn.close()
-    return user_id
+    return user_id, username
 
 # --- FUNÇÕES DE CONTROLE DE CONHECIMENTO PERSONALIZADO (RAG) ---
 
@@ -300,6 +327,63 @@ def obter_conteudo_conhecimento_usuario(usuario_id, categoria):
         textos.append(f"--- Documento de Treinamento do Usuário ({d['nome_arquivo']}) ---\n{d['conteudo_texto']}")
         
     return "\n\n".join(textos)
+
+# --- FUNÇÕES DE CHUNKING E EMBEDDINGS (RAG) ---
+
+def salvar_chunks_usuario(usuario_id, conhecimento_id, categoria, chunks_dados):
+    """
+    Salva uma lista de chunks (trechos) com seus respectivos embeddings no banco de dados.
+    chunks_dados = [{"texto": "...", "embedding": [0.1, 0.2, ...]}]
+    """
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    try:
+        for chunk in chunks_dados:
+            chunk_id = str(uuid.uuid4())
+            execute_query(
+                cursor,
+                "INSERT INTO conhecimento_chunks (id, usuario_id, conhecimento_id, categoria, texto_chunk, embedding_json) VALUES (?, ?, ?, ?, ?, ?)",
+                (chunk_id, usuario_id, conhecimento_id, categoria, chunk["texto"], json.dumps(chunk["embedding"]))
+            )
+        conn.commit()
+        success = True
+    except Exception as e:
+        print(f"Erro ao salvar chunks de conhecimento: {e}")
+        success = False
+    finally:
+        conn.close()
+        
+    return success
+
+def obter_chunks_categoria(usuario_id, categoria):
+    """
+    Retorna todos os chunks de uma categoria de um usuário.
+    Formato de retorno: [{"texto": "...", "embedding": [0.1, 0.2, ...]}]
+    """
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    execute_query(
+        cursor,
+        "SELECT texto_chunk, embedding_json FROM conhecimento_chunks WHERE usuario_id = ? AND categoria = ?",
+        (usuario_id, categoria.strip().lower())
+    )
+    rows = cursor.fetchall()
+    dicts = get_rows_list(cursor, rows)
+    conn.close()
+    
+    chunks_recuperados = []
+    for d in dicts:
+        try:
+            chunks_recuperados.append({
+                "texto": d['texto_chunk'],
+                "embedding": json.loads(d['embedding_json'])
+            })
+        except Exception as e:
+            print(f"Aviso: Falha ao carregar embedding JSON de chunk: {e}")
+            
+    return chunks_recuperados
 
 # --- FUNÇÕES DE SALVAMENTO DE ROTEIROS ---
 

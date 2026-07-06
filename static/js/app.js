@@ -93,6 +93,7 @@ document.addEventListener("DOMContentLoaded", () => {
     initVoiceRecognition();
     initTextToSpeech();
     initPDFExport();
+    initUploadWidgetControls();
     
     marked.setOptions({
         breaks: true,
@@ -297,9 +298,9 @@ async function carregarHistorico() {
                 card.classList.add("history-item");
                 card.setAttribute("data-id", item.id);
                 card.innerHTML = `
-                    <div class="history-item-title">${item.titulo}</div>
+                    <div class="history-item-title">${DOMPurify.sanitize(item.titulo)}</div>
                     <div class="history-item-meta">
-                        <span>${item.plataforma}</span>
+                        <span>${DOMPurify.sanitize(item.plataforma)}</span>
                         <span>${item.data_criacao}</span>
                     </div>
                 `;
@@ -786,7 +787,7 @@ function hideTypingIndicator() {
 }
 
 function exibirRoteiro(markdownText) {
-    scriptViewport.innerHTML = marked.parse(markdownText);
+    scriptViewport.innerHTML = DOMPurify.sanitize(marked.parse(markdownText));
 }
 
 // --- CALLBACK DO GOOGLE LOGIN ---
@@ -1220,35 +1221,130 @@ function onCanvasClick(e) {
 }
 
 // --- ENVIO DO PDF PARA O BANCO DE DADOS PELO CANVAS ---
+let activeXhr = null;
+
+function initUploadWidgetControls() {
+    const btnMinimize = document.getElementById("btn-minimize-widget");
+    const btnClose = document.getElementById("btn-close-widget");
+    const widget = document.getElementById("upload-progress-widget");
+    const minimizedIcon = document.getElementById("upload-minimized-icon");
+
+    btnMinimize.addEventListener("click", () => {
+        widget.style.display = "none";
+        minimizedIcon.style.display = "flex";
+    });
+
+    minimizedIcon.addEventListener("click", () => {
+        minimizedIcon.style.display = "none";
+        widget.style.display = "flex";
+    });
+
+    btnClose.addEventListener("click", () => {
+        if (activeXhr) {
+            activeXhr.abort();
+            activeXhr = null;
+        }
+        widget.style.display = "none";
+        minimizedIcon.style.display = "none";
+    });
+}
+
 async function handleFileUpload(event) {
     const file = event.target.files[0];
     if (!file || !uploadCategoryTarget) return;
-    
+
+    const widget = document.getElementById("upload-progress-widget");
+    const minimizedIcon = document.getElementById("upload-minimized-icon");
+    const filenameLabel = document.getElementById("widget-filename");
+    const progressFill = document.getElementById("widget-progress-fill");
+    const statusText = document.getElementById("widget-status-text");
+    const percentageText = document.getElementById("widget-percentage");
+    const minimizedProgressText = document.getElementById("minimized-progress-text");
+
+    filenameLabel.textContent = file.name;
+    progressFill.style.width = "0%";
+    progressFill.classList.remove("processing", "success");
+    statusText.textContent = "Iniciando upload...";
+    percentageText.textContent = "0%";
+    minimizedProgressText.textContent = "0%";
+
+    widget.style.display = "flex";
+    minimizedIcon.style.display = "none";
+
     const formData = new FormData();
     formData.append("file", file);
     formData.append("categoria", uploadCategoryTarget);
-    
-    // Limpa o seletor para aceitar o mesmo arquivo depois
-    neuralFileInput.value = "";
-    
-    alert(`Enviando "${file.name}" para treinamento do neurônio de ${uploadCategoryTarget.toUpperCase()}...`);
-    
-    try {
-        const res = await fetch("/api/conhecimento/upload", {
-            method: "POST",
-            body: formData
-        });
-        const data = await res.json();
-        
-        if (res.ok) {
-            alert("Sucesso! Novo treinamento integrado ao Cérebro Neuronal.");
-            // Recarrega e redesenha o cérebro
-            carregarEConstruirRedeNeural();
-        } else {
-            alert(`Erro no upload: ${data.error}`);
+
+    neuralFileInput.value = ""; // Limpa input
+
+    const xhr = new XMLHttpRequest();
+    activeXhr = xhr;
+
+    xhr.upload.addEventListener("progress", (e) => {
+        if (e.lengthComputable) {
+            const percentComplete = Math.round((e.loaded / e.total) * 100);
+            progressFill.style.width = `${percentComplete}%`;
+            percentageText.textContent = `${percentComplete}%`;
+            minimizedProgressText.textContent = `${percentComplete}%`;
+            statusText.textContent = `Enviando: ${percentComplete}%`;
         }
-    } catch (err) {
-        console.error("Erro ao subir arquivo de treinamento:", err);
-        alert("Erro na conexão com o servidor ao fazer upload.");
-    }
+    });
+
+    xhr.addEventListener("load", () => {
+        activeXhr = null;
+        if (xhr.status >= 200 && xhr.status < 300) {
+            statusText.textContent = "Processando e Integrando...";
+            progressFill.classList.add("processing");
+            
+            try {
+                // Aguarda 1.2s para o usuário ver o "sucesso"
+                setTimeout(() => {
+                    progressFill.classList.remove("processing");
+                    progressFill.classList.add("success");
+                    statusText.textContent = "Treinamento integrado!";
+                    percentageText.textContent = "OK";
+                    minimizedProgressText.textContent = "OK";
+                    
+                    setTimeout(() => {
+                        widget.style.display = "none";
+                        minimizedIcon.style.display = "none";
+                        carregarEConstruirRedeNeural();
+                    }, 1500);
+                }, 1200);
+            } catch (err) {
+                exibirErroUpload("Resposta inválida.");
+            }
+        } else {
+            let errorMsg = "Erro no processamento.";
+            try {
+                const data = JSON.parse(xhr.responseText);
+                errorMsg = data.error || errorMsg;
+            } catch(e){}
+            exibirErroUpload(errorMsg);
+        }
+    });
+
+    xhr.addEventListener("error", () => {
+        activeXhr = null;
+        exibirErroUpload("Conexão interrompida.");
+    });
+
+    xhr.addEventListener("abort", () => {
+        activeXhr = null;
+    });
+
+    xhr.open("POST", "/api/conhecimento/upload");
+    xhr.send(formData);
+}
+
+function exibirErroUpload(msg) {
+    const progressFill = document.getElementById("widget-progress-fill");
+    const statusText = document.getElementById("widget-status-text");
+    const percentageText = document.getElementById("widget-percentage");
+    
+    progressFill.classList.remove("processing");
+    progressFill.style.width = "100%";
+    progressFill.style.backgroundColor = "#EF4444";
+    statusText.textContent = `Erro: ${msg}`;
+    percentageText.textContent = "Erro";
 }

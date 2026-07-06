@@ -15,7 +15,10 @@ from agent import ScriptAgent
 import db
 
 app = Flask(__name__, template_folder="templates", static_folder="static")
-app.secret_key = os.getenv("FLASK_SECRET_KEY", "roit_secret_key_default_123_456")
+secret_key = os.getenv("FLASK_SECRET_KEY")
+if not secret_key and "PORT" in os.environ:
+    raise RuntimeError("⚠️ ERRO CRÍTICO DE SEGURANÇA: FLASK_SECRET_KEY não configurada em produção!")
+app.secret_key = secret_key or "roit_secret_key_default_123_456"
 agent = None
 
 def inicializar_agente():
@@ -88,20 +91,21 @@ def google_login():
         idinfo = id_token.verify_oauth2_token(token, google_requests.Request(), client_id)
         
         email = idinfo.get("email")
-        if not email:
-            return jsonify({"error": "E-mail não retornado pela conta Google"}), 400
+        sub = idinfo.get("sub")
+        if not email or not sub:
+            return jsonify({"error": "E-mail ou ID não retornado pela conta Google"}), 400
             
         username = email.split("@")[0]
-        user_id = db.obter_ou_criar_usuario_google(email, username)
+        user_id, final_username = db.obter_ou_criar_usuario_google(email, username, sub)
         
         session["user_id"] = user_id
-        session["username"] = username
+        session["username"] = final_username
         
         return jsonify({
             "message": "Login com Google realizado com sucesso!",
             "user": {
                 "id": user_id,
-                "username": username
+                "username": final_username
             }
         })
     except ValueError as e:
@@ -109,7 +113,7 @@ def google_login():
         return jsonify({"error": "Token de autenticação do Google inválido ou expirado."}), 401
     except Exception as e:
         print(f"Erro crítico no login Google: {e}")
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": "Ocorreu um erro interno no servidor durante a autenticação."}), 500
 
 @app.route("/api/logout", methods=["POST"])
 def logout():
@@ -170,7 +174,7 @@ def generate():
         })
     except Exception as e:
         print(f"Erro na geração do roteiro: {e}")
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": "Ocorreu um erro interno no servidor ao gerar o roteiro."}), 500
 
 @app.route("/api/chat", methods=["POST"])
 def chat():
@@ -225,7 +229,7 @@ def chat():
         return jsonify({"script": script})
     except Exception as e:
         print(f"Erro no chat de refinação: {e}")
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": "Ocorreu um erro interno no servidor durante o chat."}), 500
 
 @app.route("/api/history", methods=["GET"])
 def list_history():
@@ -292,6 +296,43 @@ def upload_conhecimento():
         )
         
         if conhecimento_id:
+            # --- CHUNKING E EMBEDDINGS (RAG) ---
+            chunk_size = 600
+            overlap = 100
+            chunks = []
+            
+            texto_limpo = conteudo_texto.replace("\n", " ").strip()
+            start = 0
+            while start < len(texto_limpo):
+                end = start + chunk_size
+                chunk = texto_limpo[start:end]
+                chunks.append(chunk)
+                start += chunk_size - overlap
+                
+            chunks_dados = []
+            from config import get_gemini_client
+            client = get_gemini_client()
+            
+            for c_text in chunks:
+                if not c_text.strip():
+                    continue
+                try:
+                    response = client.models.embed_content(
+                        model="text-embedding-004",
+                        contents=c_text
+                    )
+                    # models.embed_content returns an EmbedContentResponse which has an embeddings array of EmbedContentResponse.Embedding
+                    chunks_dados.append({
+                        "texto": c_text,
+                        "embedding": response.embeddings[0].values
+                    })
+                except Exception as e:
+                    print(f"Erro ao gerar embedding do chunk: {e}")
+                    
+            if chunks_dados:
+                db.salvar_chunks_usuario(usuario_id, conhecimento_id, categoria, chunks_dados)
+            # ------------------------------------
+            
             return jsonify({
                 "message": "Treinamento integrado com sucesso!",
                 "documento": {
@@ -305,7 +346,7 @@ def upload_conhecimento():
             
     except Exception as e:
         print(f"Erro no processamento do arquivo de treinamento: {e}")
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": "Ocorreu um erro interno no servidor ao processar o arquivo."}), 500
 
 @app.route("/api/conhecimento", methods=["GET"])
 def list_conhecimento():
@@ -339,7 +380,8 @@ def download():
         response.headers["Content-type"] = "text/markdown; charset=utf-8"
         return response
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        print(f"Erro no download: {e}")
+        return jsonify({"error": "Ocorreu um erro interno no servidor ao baixar o arquivo."}), 500
 
 def salvar_roteiro_local(roteiro, briefing):
     """Salva uma cópia de backup do roteiro na pasta do projeto."""

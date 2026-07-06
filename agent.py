@@ -1,4 +1,5 @@
 import os
+import numpy as np
 from google.genai import types
 from config import get_gemini_client, get_model_name
 import db
@@ -91,6 +92,48 @@ DADOS DO BRIEFING COLETADOS:
 - Chamada para Ação (CTA): {briefing.get('cta')}
 """
 
+    def recuperar_top_k_chunks(self, usuario_id, categoria, query_text, top_k=5):
+        """Usa RAG para encontrar os chunks mais relevantes do usuário usando similaridade de cosseno."""
+        try:
+            chunks_bd = db.obter_chunks_categoria(usuario_id, categoria)
+            if not chunks_bd:
+                # Fallback: Se não há chunks, tenta pegar o texto legado inteiro
+                return db.obter_conteudo_conhecimento_usuario(usuario_id, categoria)
+                
+            print(f"🔍 [RAG] Analisando {len(chunks_bd)} trechos para a query: '{query_text[:50]}...'")
+            # Gerar embedding da query
+            query_response = self.client.models.embed_content(
+                model="text-embedding-004",
+                contents=query_text
+            )
+            query_vec = np.array(query_response.embeddings[0].values)
+            
+            # Calcular similaridade (Cosine Similarity)
+            resultados = []
+            for chunk in chunks_bd:
+                chunk_vec = np.array(chunk["embedding"])
+                
+                dot_product = np.dot(query_vec, chunk_vec)
+                norm_query = np.linalg.norm(query_vec)
+                norm_chunk = np.linalg.norm(chunk_vec)
+                
+                if norm_query == 0 or norm_chunk == 0:
+                    sim = 0
+                else:
+                    sim = dot_product / (norm_query * norm_chunk)
+                    
+                resultados.append((sim, chunk["texto"]))
+                
+            # Ordenar por maior similaridade
+            resultados.sort(key=lambda x: x[0], reverse=True)
+            top_chunks = [res[1] for res in resultados[:top_k]]
+            
+            print(f"✅ [RAG] Top {len(top_chunks)} trechos recuperados.")
+            return "\n\n...[TRECHO RECUPERADO DA BASE]...\n".join(top_chunks)
+        except Exception as e:
+            print(f"Erro no RAG/Retrieval: {e}")
+            return db.obter_conteudo_conhecimento_usuario(usuario_id, categoria)
+
     def criar_sessao_chat(self, session_id, briefing, usuario_id=None):
         """
         Cria um chat persistente na API do Gemini para a sessão do usuário.
@@ -105,7 +148,8 @@ DADOS DO BRIEFING COLETADOS:
         # Conhecimento Exclusivo do Usuário (RAG do Banco de Dados)
         conhecimento_usuario = ""
         if usuario_id:
-            conhecimento_usuario = db.obter_conteudo_conhecimento_usuario(usuario_id, briefing["tipo"])
+            query_text = f"Técnicas de roteiro para {briefing.get('objetivo')} formato {briefing.get('tipo')} no canal {briefing.get('plataforma')} com tom {briefing.get('publico')} dor {briefing.get('mensagem_dor')}"
+            conhecimento_usuario = self.recuperar_top_k_chunks(usuario_id, briefing["tipo"], query_text, top_k=5)
             
         conhecimento_completo = conhecimento_global
         if conhecimento_usuario:
@@ -175,10 +219,11 @@ Lembre-se de adicionar a seção de "SEO e Metadados do Vídeo" no final.
         # Conhecimento Global
         conhecimento_global = self.carregar_conhecimento_categoria(briefing["tipo"])
         
-        # Conhecimento Isolado do Usuário
+        # Conhecimento Isolado do Usuário (RAG)
         conhecimento_usuario = ""
         if usuario_id:
-            conhecimento_usuario = db.obter_conteudo_conhecimento_usuario(usuario_id, briefing["tipo"])
+            query_text = f"Ajuste de roteiro: {mensagem}. Tópico original: {briefing.get('objetivo')}"
+            conhecimento_usuario = self.recuperar_top_k_chunks(usuario_id, briefing["tipo"], query_text, top_k=3)
             
         conhecimento_completo = conhecimento_global
         if conhecimento_usuario:

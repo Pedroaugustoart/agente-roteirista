@@ -13,6 +13,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Marked.js para renderizar Markdown -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <!-- DOMPurify para evitar XSS ao injetar markdown -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.6/purify.min.js"></script>
     <!-- html2pdf.js para exportar PDF client-side -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <!-- Google Identity Services para Login com Google -->
@@ -313,6 +315,37 @@
             </div>
             <div id="auth-error-msg" class="auth-error-alert" style="display: none;">Erro detectado.</div>
         </div>
+    </div>
+
+    <!-- WIDGET DE PROGRESSO DE UPLOAD EM SEGUNDO PLANO (Roit Style) -->
+    <div id="upload-progress-widget" class="upload-progress-widget" style="display: none;">
+        <div class="progress-widget-header">
+            <span class="widget-title"><i class="fa-solid fa-cloud-arrow-up"></i> Treinamento do Roit</span>
+            <div class="widget-controls">
+                <button id="btn-minimize-widget" class="btn-widget-control" title="Minimizar">
+                    <i class="fa-solid fa-minus"></i>
+                </button>
+                <button id="btn-close-widget" class="btn-widget-control" title="Cancelar upload">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+        </div>
+        <div class="progress-widget-body">
+            <p class="widget-filename" id="widget-filename">documento.pdf</p>
+            <div class="progress-bar-container">
+                <div class="progress-bar-fill" id="widget-progress-fill"></div>
+            </div>
+            <div class="progress-bar-status">
+                <span id="widget-status-text">Enviando...</span>
+                <span id="widget-percentage">0%</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ÍCONE MINIMIZADO FLUTUANTE -->
+    <div id="upload-minimized-icon" class="upload-minimized-icon" style="display: none;" title="Abrir painel de upload">
+        <i class="fa-solid fa-brain"></i>
+        <div class="minimized-progress-ring" id="minimized-progress-text">0%</div>
     </div>
 
     <script src="{{ url_for('static', filename='js/app.js') }}"></script>
