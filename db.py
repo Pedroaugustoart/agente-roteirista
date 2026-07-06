@@ -33,25 +33,11 @@ def get_db_connection():
         if pg_pool is None:
             import psycopg2
             from psycopg2 import pool
-            url_str = DATABASE_URL
-            if url_str.startswith("postgres://"):
-                url_str = url_str.replace("postgres://", "postgresql://", 1)
-                
-            url = urllib.parse.urlparse(url_str)
-            username = url.username
-            password = url.password
-            database = url.path[1:]
-            hostname = url.hostname
-            port = url.port or 5432
             
-            # Cria um pool de conexões com mínimo de 1 e máximo de 10 conexões simultâneas
+            # psycopg2 aceita a URI do PostgreSQL nativamente (incluindo sslmode=require se presente)
             pg_pool = psycopg2.pool.SimpleConnectionPool(
                 1, 10,
-                user=username,
-                password=password,
-                host=hostname,
-                port=port,
-                database=database
+                dsn=DATABASE_URL
             )
         
         # Pega uma conexão do pool e envelopa
