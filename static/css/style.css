@@ -979,18 +979,67 @@ input[type="text"]:focus, textarea:focus {
     font-family: var(--font-outfit);
     font-size: 15px;
     color: var(--roit-white);
-    margin-bottom: 8px;
+    margin-bottom: 4px;
 }
 
-.neural-info-overlay p {
+.neural-subtitle {
     font-size: 11px;
     color: var(--roit-text-secondary);
-    line-height: 1.5;
-    margin-bottom: 6px;
+    margin-bottom: 12px;
 }
 
-.neural-info-overlay p strong {
+.neural-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.step-box {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    background: rgba(255, 255, 255, 0.03);
+    padding: 8px;
+    border-radius: 6px;
+    border: 1px solid rgba(255,255,255,0.05);
+}
+
+.step-num {
+    background: var(--roit-primary);
+    color: var(--roit-black);
+    font-weight: 700;
+    font-size: 10px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.step-box p {
+    font-size: 11px;
+    color: var(--roit-text-secondary);
+    line-height: 1.4;
+    margin: 0;
+}
+
+.step-box p strong {
     color: var(--roit-white);
+}
+
+.hint-text {
+    font-size: 10px;
+    color: rgba(255,255,255,0.4);
+    display: flex;
+    gap: 6px;
+    align-items: flex-start;
+}
+.hint-text i {
+    margin-top: 2px;
 }
 
 /* Balão Popup de Detalhes do Neurônio de Arquivo */
