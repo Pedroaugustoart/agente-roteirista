@@ -86,7 +86,13 @@ def rate_limit(segundos_entre_chamadas=5):
 # Isso é essencial para rodar via Gunicorn (que não passa pelo __main__)
 @app.before_request
 def before_first_request():
-    inicializar_agente()
+    # Rota de health check não precisa de inicialização
+    if request.path == "/healthz":
+        return
+    try:
+        inicializar_agente()
+    except Exception as e:
+        logger.error(f"Falha na inicialização do agente: {e}")
 
 @app.route("/healthz")
 def healthz():

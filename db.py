@@ -34,10 +34,13 @@ def get_db_connection():
             import psycopg2
             from psycopg2 import pool
             
-            # psycopg2 aceita a URI do PostgreSQL nativamente (incluindo sslmode=require se presente)
+            # psycopg2 exige 'postgresql://' mas a Render usa 'postgres://'
+            dsn = DATABASE_URL
+            if dsn.startswith("postgres://"):
+                dsn = dsn.replace("postgres://", "postgresql://", 1)
             pg_pool = psycopg2.pool.SimpleConnectionPool(
                 1, 10,
-                dsn=DATABASE_URL
+                dsn=dsn
             )
         
         # Pega uma conexão do pool e envelopa
