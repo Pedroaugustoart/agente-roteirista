@@ -40,14 +40,19 @@ app.config["SESSION_COOKIE_HTTPONLY"] = True
 app.config["MAX_CONTENT_LENGTH"] = 16 * 1024 * 1024
 
 agent = None
+_agente_inicializado = False
 
 def inicializar_agente():
-    global agent
+    global agent, _agente_inicializado
+    if _agente_inicializado:
+        return
     api_key = os.getenv("GEMINI_API_KEY")
     if not api_key or api_key in ["sua_chave_aqui", "seu_token_aqui", ""]:
         logger.warning("GEMINI_API_KEY não configurada no seu arquivo .env!")
     agent = ScriptAgent()
     db.init_db()
+    _agente_inicializado = True
+    logger.info("✅ Agente e banco de dados inicializados com sucesso!")
 
 # --- 2. DECORADOR DE AUTENTICAÇÃO REUTILIZÁVEL ---
 def login_required(f):
@@ -76,6 +81,17 @@ def rate_limit(segundos_entre_chamadas=5):
             return f(*args, **kwargs)
         return wrapped
     return decorator
+
+# Garante que o agente seja inicializado na primeira requisição.
+# Isso é essencial para rodar via Gunicorn (que não passa pelo __main__)
+@app.before_request
+def before_first_request():
+    inicializar_agente()
+
+@app.route("/healthz")
+def healthz():
+    """Health check para a Render confirmar que o servidor está vivo."""
+    return jsonify({"status": "ok"}), 200
 
 @app.route("/")
 def index():
