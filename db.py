@@ -74,6 +74,23 @@ def get_rows_list(cursor, rows):
     columns = [col[0] for col in cursor.description]
     return [dict(zip(columns, r)) for r in rows]
 
+def _executar_migracao(conn, cursor, sql):
+    """
+    Executa uma migração DDL que pode falhar (ex: coluna já existe).
+    No PostgreSQL, qualquer erro aborta a transação inteira.
+    Usamos SAVEPOINT para poder fazer rollback só desse trecho.
+    """
+    try:
+        if USING_POSTGRES:
+            cursor.execute("SAVEPOINT migration_sp")
+        execute_query(cursor, sql)
+        if USING_POSTGRES:
+            cursor.execute("RELEASE SAVEPOINT migration_sp")
+    except Exception:
+        if USING_POSTGRES:
+            cursor.execute("ROLLBACK TO SAVEPOINT migration_sp")
+        # SQLite: ignora silenciosamente
+
 def init_db():
     """Inicializa as tabelas do banco de dados se não existirem."""
     conn = get_db_connection()
@@ -89,17 +106,12 @@ def init_db():
         data_criacao TEXT NOT NULL
     )
     """)
+    conn.commit()
     
-    # Migrações para as colunas de Provedor
-    try:
-        execute_query(cursor, "ALTER TABLE usuarios ADD COLUMN auth_provider TEXT DEFAULT 'local'")
-    except Exception:
-        pass # Coluna já existe
-        
-    try:
-        execute_query(cursor, "ALTER TABLE usuarios ADD COLUMN provider_id TEXT")
-    except Exception:
-        pass # Coluna já existe
+    # Migrações para as colunas de Provedor (usando savepoint para não abortar transação)
+    _executar_migracao(conn, cursor, "ALTER TABLE usuarios ADD COLUMN auth_provider TEXT DEFAULT 'local'")
+    _executar_migracao(conn, cursor, "ALTER TABLE usuarios ADD COLUMN provider_id TEXT")
+    conn.commit()
         
     # Tabela de Roteiros
     execute_query(cursor, """
@@ -142,15 +154,15 @@ def init_db():
         FOREIGN KEY (conhecimento_id) REFERENCES conhecimento_usuario (id) ON DELETE CASCADE
     )
     """)
-    # Índices de performance para buscas frequentes (Achado 008)
-    execute_query(cursor, "CREATE INDEX IF NOT EXISTS idx_roteiros_usuario ON roteiros(usuario_id)")
-    execute_query(cursor, "CREATE INDEX IF NOT EXISTS idx_conhecimento_usuario ON conhecimento_usuario(usuario_id)")
-    execute_query(cursor, "CREATE INDEX IF NOT EXISTS idx_chunks_usuario_categoria ON conhecimento_chunks(usuario_id, categoria)")
+    # Índices de performance para buscas frequentes
+    _executar_migracao(conn, cursor, "CREATE INDEX IF NOT EXISTS idx_roteiros_usuario ON roteiros(usuario_id)")
+    _executar_migracao(conn, cursor, "CREATE INDEX IF NOT EXISTS idx_conhecimento_usuario ON conhecimento_usuario(usuario_id)")
+    _executar_migracao(conn, cursor, "CREATE INDEX IF NOT EXISTS idx_chunks_usuario_categoria ON conhecimento_chunks(usuario_id, categoria)")
     
     conn.commit()
     conn.close()
-    db_type = "PostgreSQL (Remoto)" if USING_POSTGRES else "SQLite (Local)"
-    print(f"💾 Banco de dados {db_type} inicializado com sucesso!")
+    import logging
+    logging.getLogger("RoitApp").info(f"💾 Banco de dados {'PostgreSQL' if USING_POSTGRES else 'SQLite'} inicializado com sucesso!")
 
 def registrar_usuario(username, password):
     """Cadastra um novo usuário local no banco."""

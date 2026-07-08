@@ -408,6 +408,6 @@ if __name__ == "__main__":
         logger.info(f"🚀 Servidor de Desenvolvimento rodando: http://127.0.0.1:{port}")
         app.run(host="127.0.0.1", port=port, debug=True)
     else:
-        logger.info(f"🚀 Servidor de Produção iniciado na porta {port}...")
-        # AVISO: Na nuvem, acione via Gunicorn, ex: gunicorn -w 4 -b 0.0.0.0:$PORT app:app
-        app.run(host="0.0.0.0", port=port, debug=False)
+        # Produção: escuta em 0.0.0.0 para que a Render encontre a porta
+        logger.info(f"🚀 Servidor iniciado na porta {port}...")
+        app.run(host="0.0.0.0", port=port, debug=False, threaded=True)
