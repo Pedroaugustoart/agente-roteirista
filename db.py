@@ -9,6 +9,11 @@ import urllib.parse
 from datetime import datetime
 
 DATABASE_URL = os.getenv("DATABASE_URL")
+is_production = "PORT" in os.environ
+
+if is_production and not DATABASE_URL:
+    raise RuntimeError("⚠️ ERRO CRÍTICO (FAIL-FAST): DATABASE_URL não configurada! Em produção (Render), o uso do SQLite local apaga os dados a cada deploy. Você DEVE configurar um banco PostgreSQL e colocar a URL dele na variável DATABASE_URL.")
+
 USING_POSTGRES = DATABASE_URL is not None and (DATABASE_URL.startswith("postgres://") or DATABASE_URL.startswith("postgresql://"))
 
 pg_pool = None
