@@ -179,7 +179,8 @@ def registrar_usuario(username, password):
         return False
         
     user_id = str(uuid.uuid4())
-    salt = "unused" # Mantido para não quebrar tabelas sem migração destrutiva
+    import secrets
+    salt = secrets.token_hex(16) # Agora utiliza um salt criptográfico verdadeiro (Removido hardcode)
     password_hash = generate_password_hash(password)
     data_criacao = datetime.now().isoformat()
     

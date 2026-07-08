@@ -29,7 +29,7 @@ is_production = "PORT" in os.environ
 if is_production and not secret_key:
     raise RuntimeError("⚠️ ERRO CRÍTICO: FLASK_SECRET_KEY não configurada em ambiente de produção!")
 
-app.secret_key = secret_key or "roit_secret_key_dev_local_12345"
+app.secret_key = secret_key or os.urandom(24).hex()
 
 # Proteção contra ataques CSRF e roubo de cookies
 app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
@@ -81,6 +81,41 @@ def rate_limit(segundos_entre_chamadas=5):
             return f(*args, **kwargs)
         return wrapped
     return decorator
+
+# --- 4. HEADERS DE SEGURANÇA E PREVENÇÃO DE INFORMATION DISCLOSURE ---
+@app.after_request
+def set_security_headers(response):
+    """
+    Injeta headers de segurança exigidos por compliance bancário/corporativo.
+    Impede ataques XSS, Clickjacking, MIME-Sniffing e força HTTPS (HSTS).
+    """
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    response.headers['X-Frame-Options'] = 'SAMEORIGIN'
+    response.headers['X-XSS-Protection'] = '1; mode=block'
+    
+    if is_production:
+        response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
+        # Uma Content-Security-Policy restritiva. Permite Google (para Auth/Fonts), CDNs comuns, etc.
+        csp = (
+            "default-src 'self'; "
+            "script-src 'self' 'unsafe-inline' https://accounts.google.com https://cdn.jsdelivr.net; "
+            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net; "
+            "font-src 'self' https://fonts.gstatic.com; "
+            "frame-src 'self' https://accounts.google.com; "
+            "connect-src 'self' https://accounts.google.com;"
+        )
+        response.headers['Content-Security-Policy'] = csp
+        
+    return response
+
+@app.errorhandler(500)
+def internal_server_error(e):
+    logger.error(f"Erro interno do servidor: {e}")
+    return jsonify({"error": "Erro interno no servidor. Nossa equipe de engenharia já foi notificada."}), 500
+
+@app.errorhandler(404)
+def not_found_error(e):
+    return jsonify({"error": "Recurso não encontrado ou URL inválida."}), 404
 
 # Garante que o agente seja inicializado na primeira requisição.
 # Isso é essencial para rodar via Gunicorn (que não passa pelo __main__)
