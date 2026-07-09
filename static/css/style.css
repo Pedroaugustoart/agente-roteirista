@@ -1604,3 +1604,81 @@ body {
     background: #0088ff !important;
     box-shadow: 0 6px 20px rgba(0, 118, 214, 0.6);
 }
+
+/* RESPONSIVIDADE MOBILE */
+@media (max-width: 768px) {
+    .app-container {
+        flex-direction: column;
+    }
+    .sidebar {
+        position: fixed;
+        left: -320px;
+        top: 0;
+        bottom: 0;
+        z-index: 1000;
+        transition: left 0.3s ease;
+        box-shadow: 4px 0 15px rgba(0,0,0,0.5);
+    }
+    .sidebar.open {
+        left: 0;
+    }
+    .btn-mobile-menu {
+        display: block !important;
+        background: transparent;
+        border: none;
+        color: var(--roit-white);
+        font-size: 24px;
+        cursor: pointer;
+        margin-right: 16px;
+    }
+    .main-header {
+        justify-content: space-between;
+        padding: 16px;
+    }
+    .main-tabs-nav {
+        flex-grow: 1;
+        justify-content: center;
+        gap: 8px;
+    }
+    .tab-nav-btn {
+        padding: 8px 16px;
+        font-size: 13px;
+    }
+    .header-logo-outline {
+        display: none;
+    }
+    .split-section {
+        flex-direction: column !important;
+    }
+    .split-panel-chat {
+        border-right: none;
+        border-bottom: var(--border-roit-thin);
+        height: 50vh;
+        flex: none;
+    }
+    .split-panel-script {
+        height: 50vh;
+        flex: none;
+    }
+    .neural-network-container {
+        flex-direction: column;
+    }
+    .neural-info-overlay {
+        position: relative;
+        top: auto;
+        left: auto;
+        width: 100%;
+        max-width: 100%;
+        margin-bottom: 16px;
+    }
+    #neural-canvas {
+        height: 50vh;
+    }
+    .form-section.split-section {
+        flex-direction: column !important;
+    }
+    .conversational-panel {
+        border-right: none;
+        border-bottom: var(--border-roit-thin);
+    }
+}

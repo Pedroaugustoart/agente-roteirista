@@ -59,11 +59,18 @@
             </div>
         </aside>
         
+        <!-- OVERLAY DO MOBILE -->
+        <div id="mobile-overlay" class="mobile-overlay" style="display: none; position: fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.5); z-index:900;"></div>
+        
         <!-- ÁREA DE CONTEÚDO PRINCIPAL -->
         <main class="main-content">
             
             <!-- HEADER DA PÁGINA (Com Banner Central e Avatar) -->
             <header class="main-header">
+                <button id="btn-mobile-menu" class="btn-mobile-menu" style="display: none;">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+                
                 <!-- Abas do Roit no Menu Superior -->
                 <nav class="main-tabs-nav" id="main-tabs-nav">
                     <button class="tab-nav-btn active" data-tab="tab-generator">Criar Roteiro</button>

@@ -1588,3 +1588,20 @@ function exibirErroUpload(msg) {
     statusText.textContent = `Erro: ${msg}`;
     percentageText.textContent = "Erro";
 }
+
+// MOBILE SIDEBAR
+const btnMobileMenu = document.getElementById("btn-mobile-menu");
+const sidebar = document.querySelector(".sidebar");
+const mobileOverlay = document.getElementById("mobile-overlay");
+
+if (btnMobileMenu && sidebar && mobileOverlay) {
+    btnMobileMenu.addEventListener("click", () => {
+        sidebar.classList.add("open");
+        mobileOverlay.style.display = "block";
+    });
+
+    mobileOverlay.addEventListener("click", () => {
+        sidebar.classList.remove("open");
+        mobileOverlay.style.display = "none";
+    });
+}
