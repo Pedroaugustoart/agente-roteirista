@@ -67,6 +67,7 @@ const chatInputBar = document.getElementById("chat-input-bar");
 const chatInputField = document.getElementById("chat-input-field");
 const btnChatSendNew = document.getElementById("btn-chat-send");
 const chatOptionsBar = document.getElementById("chat-options-bar");
+const btnVoiceChatNew = document.getElementById("btn-voice-input-chat");
 
 // Novos Elementos de Áudio, Abas e Canvas
 const tabGenerator = document.getElementById("tab-generator");
@@ -636,7 +637,8 @@ async function enviarMensagem() {
 function initVoiceRecognition() {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) {
-        btnVoiceChat.style.display = "none"; // Esconde o botão se o navegador não suportar
+        if (btnVoiceChat) btnVoiceChat.style.display = "none";
+        if (btnVoiceChatNew) btnVoiceChatNew.style.display = "none";
         return;
     }
 
@@ -645,36 +647,56 @@ function initVoiceRecognition() {
     recognition.lang = 'pt-BR';
     recognition.interimResults = false;
     recognition.maxAlternatives = 1;
+    
+    let targetInput = null;
+    let targetButton = null;
+    let originalPlaceholder = "";
 
-    btnVoiceChat.addEventListener("click", () => {
+    function handleVoiceClick(inputEl, btnEl) {
         if (isListening) {
             recognition.stop();
         } else {
+            targetInput = inputEl;
+            targetButton = btnEl;
+            originalPlaceholder = inputEl.placeholder;
             recognition.start();
         }
-    });
+    }
+
+    if (btnVoiceChat) {
+        btnVoiceChat.addEventListener("click", () => handleVoiceClick(chatInput, btnVoiceChat));
+    }
+    
+    if (btnVoiceChatNew) {
+        btnVoiceChatNew.addEventListener("click", (e) => {
+            e.preventDefault(); // Evitar form submit default
+            handleVoiceClick(chatInputField, btnVoiceChatNew);
+        });
+    }
 
     recognition.onstart = () => {
         isListening = true;
-        btnVoiceChat.classList.add("listening");
-        chatInput.placeholder = "Escutando sua voz...";
+        if (targetButton) targetButton.classList.add("listening");
+        if (targetInput) targetInput.placeholder = "Escutando sua voz...";
     };
 
     recognition.onend = () => {
         isListening = false;
-        btnVoiceChat.classList.remove("listening");
-        chatInput.placeholder = "Fale ou digite modificações nas falas do roteiro...";
+        if (targetButton) targetButton.classList.remove("listening");
+        if (targetInput) targetInput.placeholder = originalPlaceholder;
     };
 
     recognition.onresult = (event) => {
         const speechToText = event.results[0][0].transcript;
-        chatInput.value = speechToText;
-        chatInput.focus();
+        if (targetInput) {
+            targetInput.value = speechToText;
+            targetInput.focus();
+        }
     };
 
     recognition.onerror = (event) => {
         console.error("Erro no reconhecimento de voz:", event.error);
-        alert("Ocorreu um erro no reconhecimento de voz: " + event.error);
+        if (targetInput) targetInput.placeholder = originalPlaceholder;
     };
 }
 
