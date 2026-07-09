@@ -69,6 +69,15 @@ const btnChatSendNew = document.getElementById("btn-chat-send");
 const chatOptionsBar = document.getElementById("chat-options-bar");
 const btnVoiceChatNew = document.getElementById("btn-voice-input-chat");
 
+// Imagens de Referencia
+const btnAttachImage = document.getElementById("btn-attach-image");
+const chatImageUpload = document.getElementById("chat-image-upload");
+const chatImagePreviewContainer = document.getElementById("chat-image-preview-container");
+const chatImageThumbnail = document.getElementById("chat-image-thumbnail");
+const btnRemoveImage = document.getElementById("btn-remove-image");
+
+let attachedImageBase64 = null;
+
 // Novos Elementos de Áudio, Abas e Canvas
 const tabGenerator = document.getElementById("tab-generator");
 const tabNeuralBrain = document.getElementById("tab-neural-brain");
@@ -321,6 +330,7 @@ function initConversationalUI() {
         plataforma: "", tipo: "", referencias: "", duracao: "",
         publico: "", cta: "", objetivo: "", mensagem_dor: "", tom: "Didático / Informativo / Calmo"
     };
+    Object.keys(briefingData).forEach(k => delete briefingData[k]);
     
     // Esconde o welcome block se a pessoa interagir
     const welcome = document.getElementById("welcome-block");
@@ -332,6 +342,36 @@ function initConversationalUI() {
     // Inicializa barra
     updateBriefingPanel();
     
+    if (btnAttachImage) {
+        btnAttachImage.addEventListener("click", (e) => {
+            e.preventDefault();
+            if (chatImageUpload) chatImageUpload.click();
+        });
+    }
+
+    if (chatImageUpload) {
+        chatImageUpload.addEventListener("change", (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (evt) => {
+                attachedImageBase64 = evt.target.result;
+                if (chatImageThumbnail) chatImageThumbnail.src = attachedImageBase64;
+                if (chatImagePreviewContainer) chatImagePreviewContainer.style.display = "block";
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+
+    if (btnRemoveImage) {
+        btnRemoveImage.addEventListener("click", (e) => {
+            e.preventDefault();
+            attachedImageBase64 = null;
+            if (chatImageUpload) chatImageUpload.value = "";
+            if (chatImagePreviewContainer) chatImagePreviewContainer.style.display = "none";
+        });
+    }
+
     // Usando tanto onclick quanto listener para garantir
     btnChatSendNew.onclick = (e) => { e.preventDefault(); handleChatSend(); };
     btnChatSendNew.addEventListener("click", (e) => { e.preventDefault(); handleChatSend(); });
@@ -416,12 +456,24 @@ function handleChatSend() {
     if(welcome) welcome.classList.add("fade-out");
     
     const val = chatInputField.value.trim();
-    if (!val) return;
+    if (!val && !attachedImageBase64) return;
     
     const stepData = convSteps[convStep];
     briefingData[stepData.key] = val;
     
-    appendConversationalMessage("user", val);
+    if (attachedImageBase64) {
+        if (!briefingData.imagens_referencia) briefingData.imagens_referencia = [];
+        briefingData.imagens_referencia.push(attachedImageBase64);
+        
+        // Append image visually
+        appendConversationalMessage("user", val ? val + " [Imagem Anexada]" : "[Imagem Anexada]");
+        
+        // Clear attachments
+        if (btnRemoveImage) btnRemoveImage.click();
+    } else {
+        appendConversationalMessage("user", val);
+    }
+    
     chatInputField.value = "";
     
     convStep++;
@@ -637,8 +689,13 @@ async function enviarMensagem() {
 function initVoiceRecognition() {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) {
-        if (btnVoiceChat) btnVoiceChat.style.display = "none";
-        if (btnVoiceChatNew) btnVoiceChatNew.style.display = "none";
+        // Se não suportar, quando clicar avisa o usuário (não oculta para ele ver que existe o recurso)
+        function notifyUnsupported(e) {
+            e.preventDefault();
+            alert("O seu navegador atual não suporta o comando de voz nativo. Tente utilizar o Google Chrome.");
+        }
+        if (btnVoiceChat) btnVoiceChat.addEventListener("click", notifyUnsupported);
+        if (btnVoiceChatNew) btnVoiceChatNew.addEventListener("click", notifyUnsupported);
         return;
     }
 

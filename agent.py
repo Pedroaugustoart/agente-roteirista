@@ -1,5 +1,6 @@
 import os
 import numpy as np
+import base64
 from functools import lru_cache
 from google.genai import types
 from config import get_gemini_client, get_model_name
@@ -179,6 +180,17 @@ BASE DE CONHECIMENTO EXCLUSIVA DE TREINAMENTO (Siga estritamente estas regras e 
 Gere agora o roteiro em português na tabela Markdown com as duas colunas solicitadas (Visual & Edição | Áudio & Locução). Dê destaque máximo para as falas do apresentador na coluna de Áudio & Locução.
 Lembre-se de adicionar a seção de "SEO e Metadados do Vídeo" no final.
 """
+
+        message_parts = [prompt_usuario]
+        
+        # Se houver imagens anexadas, adiciona à lista
+        if "imagens_referencia" in briefing and briefing["imagens_referencia"]:
+            for img_data_url in briefing["imagens_referencia"]:
+                if img_data_url.startswith("data:image"):
+                    header, base64_str = img_data_url.split(",", 1)
+                    mime_type = header.split(":")[1].split(";")[0]
+                    img_bytes = base64.b64decode(base64_str)
+                    message_parts.append(types.Part.from_bytes(data=img_bytes, mime_type=mime_type))
 
         print(f"🧠 Inicializando chat persistente para a sessão {session_id} com modelo {self.model}...")
         

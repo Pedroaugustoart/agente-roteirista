@@ -119,14 +119,22 @@
                             
                             <!-- Input Bar Fixo no final -->
                             <div class="chat-input-container">
+                                <div id="chat-image-preview-container" style="display:none; padding: 8px; background: var(--bg-dark-sidebar); border-radius: 8px; border: var(--border-roit-thin); width: max-content; margin-bottom: 8px; position: relative;">
+                                    <img id="chat-image-thumbnail" style="max-height: 80px; border-radius: 4px;">
+                                    <button id="btn-remove-image" style="position: absolute; top: -8px; right: -8px; background: #ff4444; color: white; border: none; border-radius: 50%; width: 20px; height: 20px; cursor: pointer; font-size: 12px; display: flex; align-items: center; justify-content: center;"><i class="fa-solid fa-times"></i></button>
+                                </div>
                                 <div class="chat-input-bar" id="chat-input-bar">
                                     <input type="text" id="chat-input-field" placeholder="Me conte sua ideia..." autocomplete="off">
                                     <div class="chat-input-actions">
+                                        <input type="file" id="chat-image-upload" accept="image/*" style="display: none;">
+                                        <button id="btn-attach-image" class="btn-voice-chat-icon" title="Anexar imagem de referência">
+                                            <i class="fa-solid fa-paperclip"></i>
+                                        </button>
                                         <button id="btn-voice-input-chat" class="btn-voice-chat-icon" title="Usar comando de voz">
                                             <i class="fa-solid fa-microphone"></i>
                                         </button>
                                         <button id="btn-chat-send" class="btn-chat-send premium-btn" title="Enviar resposta">
-                                            <i class="fa-solid fa-arrow-right"></i>
+                                            <i class="fa-solid fa-paper-plane" style="color: #ffffff; font-size: 16px;"></i>
                                         </button>
                                     </div>
                                 </div>
