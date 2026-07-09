@@ -873,6 +873,18 @@ async function carregarEConstruirRedeNeural() {
     nodes = [];
     connections = [];
     particles = [];
+    ambientParticles = [];
+    
+    // Gera partículas ambientes
+    for (let i = 0; i < 50; i++) {
+        ambientParticles.push({
+            x: Math.random() * canvas.width,
+            y: Math.random() * canvas.height,
+            vx: (Math.random() - 0.5) * 0.5,
+            vy: (Math.random() - 0.5) * 0.5,
+            size: Math.random() * 2 + 1
+        });
+    }
     
     const centerX = canvas.width / 2;
     const centerY = canvas.height / 2;
@@ -892,10 +904,10 @@ async function carregarEConstruirRedeNeural() {
     
     // 3. Os 4 Ramos Principais (Focos / Categorias)
     const categorias = [
-        { id: "storytelling", label: "Storytelling", color: "#FF007A", angle: 0 },
-        { id: "viral", label: "Viral", color: "#00F0FF", angle: Math.PI / 2 },
-        { id: "analise", label: "Análise", color: "#AD00FF", angle: Math.PI },
-        { id: "educativo", label: "Educativo", color: "#00FF66", angle: 3 * Math.PI / 2 }
+        { id: "storytelling", label: "Storytelling", color: "#00E5FF", angle: 0 },
+        { id: "viral", label: "Viral", color: "#00E5FF", angle: Math.PI / 2 },
+        { id: "analise", label: "Análise", color: "#00E5FF", angle: Math.PI },
+        { id: "educativo", label: "Educativo", color: "#00E5FF", angle: 3 * Math.PI / 2 }
     ];
     
     const distCategorias = 150;
@@ -936,12 +948,12 @@ async function carregarEConstruirRedeNeural() {
                     r: 12,
                     label: doc.nome_arquivo,
                     type: "file",
-                    color: pai.color,
+                    color: "#1877F2",
                     meta: doc.data_criacao
                 };
                 
                 nodes.push(fileNode);
-                connections.push({ from: doc.categoria, to: doc.id, color: "rgba(255,255,255,0.25)" });
+                connections.push({ from: doc.categoria, to: doc.id, color: "rgba(24, 119, 242, 0.4)" });
             });
         }
     } catch (err) {
@@ -1066,6 +1078,38 @@ function aplicarFisicaEForcas() {
 function desenharCanvas() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
+    // 0. Desenha partículas ambientes (Background Neural)
+    if (typeof ambientParticles !== 'undefined') {
+        ambientParticles.forEach(p => {
+            p.x += p.vx;
+            p.y += p.vy;
+            if (p.x < 0 || p.x > canvas.width) p.vx *= -1;
+            if (p.y < 0 || p.y > canvas.height) p.vy *= -1;
+            
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+            ctx.fillStyle = "rgba(0, 229, 255, 0.3)";
+            ctx.fill();
+        });
+        
+        // Linhas ambientes
+        for (let i = 0; i < ambientParticles.length; i++) {
+            for (let j = i + 1; j < ambientParticles.length; j++) {
+                const dx = ambientParticles[i].x - ambientParticles[j].x;
+                const dy = ambientParticles[i].y - ambientParticles[j].y;
+                const dist = dx * dx + dy * dy;
+                if (dist < 15000) {
+                    ctx.beginPath();
+                    ctx.moveTo(ambientParticles[i].x, ambientParticles[i].y);
+                    ctx.lineTo(ambientParticles[j].x, ambientParticles[j].y);
+                    ctx.strokeStyle = `rgba(24, 119, 242, ${1 - dist/15000})`;
+                    ctx.lineWidth = 0.5;
+                    ctx.stroke();
+                }
+            }
+        }
+    }
+    
     // 1. Desenha as conexões (linhas de sinapse)
     connections.forEach(conn => {
         const from = nodes.find(n => n.id === conn.from);
@@ -1103,15 +1147,9 @@ function desenharCanvas() {
         if (node.type === "center") {
             const pulse = 1 + Math.sin(Date.now() / 400) * 0.06;
             ctx.arc(node.x, node.y, node.r * pulse, 0, Math.PI * 2);
-            
-            // Gradiente
-            const grad = ctx.createRadialGradient(node.x, node.y, 2, node.x, node.y, node.r);
-            grad.addColorStop(0, "#ffffff");
-            grad.addColorStop(0.7, "#1c1c24");
-            grad.addColorStop(1, "#09090b");
-            ctx.fillStyle = grad;
+            ctx.fillStyle = "rgba(0, 0, 0, 0.8)";
         } else {
-            ctx.fillStyle = "#121218";
+            ctx.fillStyle = "#000000";
         }
         
         ctx.strokeStyle = node.color;

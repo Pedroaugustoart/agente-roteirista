@@ -16,8 +16,8 @@
     
     --border-roit-thin: 1px solid rgba(255, 255, 255, 0.05);
     --border-roit-glow: 1px solid rgba(0, 229, 255, 0.2);
-    --border-radius-main: 14px;
-    --border-radius-sidebar: 32px;
+    --border-radius-main: 8px;
+    --border-radius-sidebar: 0px;
     
     --font-outfit: 'Outfit', sans-serif;
     --font-inter: 'Inter', sans-serif;
@@ -230,6 +230,7 @@ body {
     align-items: center;
     margin-bottom: 32px;
     position: relative;
+    z-index: 10;
 }
 
 .header-logo-outline {
@@ -275,6 +276,7 @@ body {
     border-color: var(--roit-white);
     background-color: rgba(255, 255, 255, 0.05);
 }
+
 
 .user-dropdown-panel {
     position: absolute;
@@ -434,13 +436,13 @@ body {
 
 /* Inputs, Textareas */
 input[type="text"], textarea {
-    background-color: var(--bg-dark-card);
+    background-color: transparent;
     border: var(--border-roit-thin);
-    border-radius: 12px;
-    padding: 14px 18px;
+    border-radius: var(--border-radius-main);
     color: var(--roit-text-primary);
     font-family: var(--font-inter);
     font-size: 13px;
+    padding: 14px 18px;
     outline: none;
     resize: none;
     transition: var(--transition-roit);
@@ -457,11 +459,11 @@ input[type="text"]:focus, textarea:focus {
 }
 
 .btn-generate-script {
-    background: var(--roit-blue-gradient);
+    background: var(--roit-white);
     color: #000000;
     border: none;
-    border-radius: 8px;
-    padding: 14px 28px;
+    border-radius: 50px;
+    padding: 16px 40px;
     font-family: var(--font-outfit);
     font-weight: 700;
     font-size: 14px;
@@ -473,8 +475,8 @@ input[type="text"]:focus, textarea:focus {
 }
 
 .btn-generate-script:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 20px rgba(0, 229, 255, 0.3);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(255, 255, 255, 0.15);
 }
 
 /* TELA 2: SPLIT SCREEN VIEW */
@@ -937,13 +939,16 @@ input[type="text"]:focus, textarea:focus {
 
 /* --- MAPA MENTAL NEURONAL (CANVAS) --- */
 .neural-network-container {
-    position: relative;
-    width: 100%;
-    height: 100%;
-    background-color: #050507;
-    border: var(--border-roit-thin);
-    border-radius: 16px;
+    position: fixed;
+    top: 0;
+    left: 290px;
+    width: calc(100vw - 290px);
+    height: 100vh;
+    background-color: #000000;
+    border: none;
+    border-radius: 0;
     overflow: hidden;
+    z-index: 1;
 }
 
 #neural-canvas {
@@ -959,17 +964,15 @@ input[type="text"]:focus, textarea:focus {
 
 .neural-info-overlay {
     position: absolute;
-    bottom: 24px;
-    left: 24px;
-    width: 280px;
-    background-color: rgba(20, 20, 26, 0.7);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
+    bottom: 32px;
+    left: 32px;
+    width: 320px;
+    background-color: transparent;
     border: var(--border-roit-thin);
-    border-radius: 12px;
-    padding: 18px;
+    border-radius: var(--border-radius-main);
+    padding: 24px;
     pointer-events: none; /* Deixa cliques passarem para o Canvas abaixo */
-    box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+    z-index: 10;
 }
 
 .neural-info-overlay h3 {
