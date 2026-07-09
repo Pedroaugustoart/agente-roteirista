@@ -207,7 +207,7 @@ Lembre-se de adicionar a seção de "SEO e Metadados do Vídeo" no final.
             )
             
             self.active_chats[session_id] = chat
-            response = chat.send_message(prompt_usuario)
+            response = chat.send_message(message_parts)
             return response.text
             
         except Exception as e:
