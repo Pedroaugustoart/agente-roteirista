@@ -136,6 +136,10 @@ def healthz():
 
 @app.route("/")
 def index():
+    return render_template("landing.html")
+
+@app.route("/app")
+def app_dashboard():
     return render_template("index.html", google_client_id=os.getenv("GOOGLE_CLIENT_ID", ""))
 
 # --- ROTAS DE AUTENTICAÇÃO ---

@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Roit | O Seu Novo Roteirista IA</title>
+    <!-- Google Fonts: Outfit & Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Outfit:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/landing.css') }}">
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+    <!-- NAV -->
+    <nav class="landing-nav">
+        <div class="nav-logo">Roit</div>
+        <a href="/app" class="btn-nav-login">Acessar Conta</a>
+    </nav>
+
+    <!-- HERO SECTION -->
+    <section class="hero-section">
+        <!-- Interactive Neural Canvas Background -->
+        <canvas id="neural-hero-canvas"></canvas>
+        <div class="hero-overlay-gradient"></div>
+
+        <div class="hero-content">
+            <div class="hero-badge">IA PARA CRIADORES E AGÊNCIAS</div>
+            <h1 class="hero-title">SEU NOVO<br><span class="text-blue-accent">ROTEIRISTA</span> PESSOAL</h1>
+            <p class="hero-subtitle">Viralize no TikTok, Reels e Shorts com roteiros criados por uma Inteligência Artificial estruturada para maximizar a retenção do seu público.</p>
+            <a href="/app" class="btn-hero-cta">Testar Roit Agora <i class="fa-solid fa-arrow-right"></i></a>
+        </div>
+    </section>
+
+    <!-- KINETIC MARQUEE -->
+    <div class="marquee-wrapper">
+        <div class="marquee-content">
+            <!-- Texto repetido para o efeito infinito -->
+            <span>TIKTOK</span><span class="dot">•</span>
+            <span>REELS</span><span class="dot">•</span>
+            <span>SHORTS</span><span class="dot">•</span>
+            <span>VIRALIZAÇÃO</span><span class="dot">•</span>
+            <span>STORYTELLING</span><span class="dot">•</span>
+            <span>RETENÇÃO</span><span class="dot">•</span>
+            <span>TIKTOK</span><span class="dot">•</span>
+            <span>REELS</span><span class="dot">•</span>
+            <span>SHORTS</span><span class="dot">•</span>
+            <span>VIRALIZAÇÃO</span><span class="dot">•</span>
+            <span>STORYTELLING</span><span class="dot">•</span>
+            <span>RETENÇÃO</span><span class="dot">•</span>
+        </div>
+    </div>
+
+    <!-- BENTO BOX FEATURES -->
+    <section class="features-section">
+        <div class="features-header">
+            <h2>Por que o Roit é <span class="text-blue-accent">diferente</span>?</h2>
+            <p>Esqueça os prompts genéricos do ChatGPT. O Roit tem um cérebro projetado exclusivamente para as redes sociais modernas.</p>
+        </div>
+
+        <div class="bento-grid">
+            <!-- Bento Item 1: Roteiros -->
+            <div class="bento-card card-tall">
+                <div class="bento-icon"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
+                <h3>Ganchos Magnéticos</h3>
+                <p>Nossa IA foi treinada para criar <em>hooks</em> irresistíveis nos primeiros 3 segundos, prendendo a atenção da sua audiência imediatamente e aumentando a sua taxa de retenção.</p>
+                <div class="bento-visual">
+                    <div class="mockup-bar" style="width: 100%;"></div>
+                    <div class="mockup-bar" style="width: 80%;"></div>
+                    <div class="mockup-bar" style="width: 90%;"></div>
+                    <div class="mockup-bar" style="width: 40%;"></div>
+                </div>
+            </div>
+
+            <!-- Bento Item 2: Cérebro Neuronal -->
+            <div class="bento-card card-wide bg-blue">
+                <div class="bento-content-wide">
+                    <div class="bento-icon"><i class="fa-solid fa-brain"></i></div>
+                    <h3>Cérebro Neuronal RAG</h3>
+                    <p>Alimente a IA com PDFs, e-books e documentos da sua marca. O Roit absorve o conhecimento e escreve roteiros exatamente no tom de voz da sua empresa, sem você precisar explicar tudo de novo.</p>
+                </div>
+            </div>
+
+            <!-- Bento Item 3: Multiplataforma -->
+            <div class="bento-card">
+                <div class="bento-icon"><i class="fa-brands fa-tiktok"></i></div>
+                <h3>Formato Vertical</h3>
+                <p>Roteiros já divididos entre <em>Áudio/Fala</em> e <em>Visual/Câmera</em>, prontos para gravação e edição.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="landing-footer">
+        <div class="footer-logo">Roit</div>
+        <p>© 2026 Roit. Todos os direitos reservados.</p>
+        <p class="footer-links">
+            <a href="mailto:contato@roit.com">Contato</a>
+        </p>
+    </footer>
+
+    <script src="{{ url_for('static', filename='js/landing.js') }}"></script>
+</body>
+</html>

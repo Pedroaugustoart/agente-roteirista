@@ -1,0 +1,394 @@
+/* =========================================================================
+   KINETIC SMM STUDIO STYLE - ROIT LANDING PAGE
+   ========================================================================= */
+
+   :root {
+    /* Hybrid Blue (Neon + Royal) */
+    --roit-blue-core: #1877F2;     /* Royal/Corporate Base */
+    --roit-blue-neon: #00E5FF;     /* Neon/Cyan Highlight */
+    --roit-blue-gradient: linear-gradient(135deg, #1877F2 0%, #00E5FF 100%);
+    
+    /* Dark Theme */
+    --bg-darkest: #050505;
+    --bg-darker: #09090B;
+    --bg-card: #121217;
+    
+    --text-white: #FFFFFF;
+    --text-gray: #A0A0AA;
+    
+    --font-outfit: 'Outfit', sans-serif;
+    --font-inter: 'Inter', sans-serif;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background-color: var(--bg-darkest);
+    color: var(--text-white);
+    font-family: var(--font-inter);
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+}
+
+/* ---------------------------------------------------
+   NAVBAR
+   --------------------------------------------------- */
+.landing-nav {
+    position: fixed;
+    top: 0;
+    width: 100%;
+    padding: 24px 48px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 100;
+    mix-blend-mode: difference; /* Makes it visible over light/dark canvas */
+}
+
+.nav-logo {
+    font-family: var(--font-outfit);
+    font-weight: 900;
+    font-size: 28px;
+    letter-spacing: 1px;
+    border: 2px solid var(--text-white);
+    padding: 4px 16px;
+}
+
+.btn-nav-login {
+    font-family: var(--font-inter);
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--bg-darkest);
+    background-color: var(--text-white);
+    padding: 12px 24px;
+    border-radius: 50px;
+    text-decoration: none;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.btn-nav-login:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(255, 255, 255, 0.2);
+}
+
+/* ---------------------------------------------------
+   HERO SECTION (Neural Canvas)
+   --------------------------------------------------- */
+.hero-section {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+/* Canvas Background */
+#neural-hero-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+}
+
+/* Fade out gradient at the bottom */
+.hero-overlay-gradient {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 40vh;
+    background: linear-gradient(to bottom, rgba(5,5,5,0) 0%, rgba(5,5,5,1) 100%);
+    z-index: 2;
+    pointer-events: none;
+}
+
+/* Hero Content */
+.hero-content {
+    position: relative;
+    z-index: 3;
+    text-align: center;
+    max-width: 900px;
+    padding: 0 24px;
+    pointer-events: none; /* Lets mouse interact with canvas behind */
+}
+
+.hero-badge {
+    display: inline-block;
+    padding: 8px 16px;
+    background: rgba(24, 119, 242, 0.15);
+    border: 1px solid var(--roit-blue-core);
+    color: var(--roit-blue-neon);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    border-radius: 50px;
+    margin-bottom: 24px;
+    pointer-events: auto;
+}
+
+.hero-title {
+    font-family: var(--font-outfit);
+    font-weight: 900;
+    font-size: 8vw;
+    line-height: 0.9;
+    letter-spacing: -0.03em;
+    margin-bottom: 32px;
+    text-transform: uppercase;
+}
+
+.text-blue-accent {
+    background: var(--roit-blue-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    display: inline-block;
+}
+
+.hero-subtitle {
+    font-size: 20px;
+    color: var(--text-gray);
+    max-width: 600px;
+    margin: 0 auto 48px auto;
+    line-height: 1.6;
+}
+
+.btn-hero-cta {
+    display: inline-block;
+    background: var(--roit-blue-gradient);
+    color: var(--text-white);
+    font-family: var(--font-outfit);
+    font-weight: 700;
+    font-size: 18px;
+    padding: 20px 48px;
+    border-radius: 50px;
+    text-decoration: none;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    pointer-events: auto;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s;
+    box-shadow: 0 10px 30px rgba(24, 119, 242, 0.4);
+}
+
+.btn-hero-cta:hover {
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: 0 15px 40px rgba(0, 229, 255, 0.5);
+}
+
+.btn-hero-cta i {
+    margin-left: 8px;
+}
+
+/* ---------------------------------------------------
+   KINETIC MARQUEE
+   --------------------------------------------------- */
+.marquee-wrapper {
+    background: var(--roit-blue-core);
+    padding: 24px 0;
+    overflow: hidden;
+    white-space: nowrap;
+    display: flex;
+    position: relative;
+    z-index: 5;
+    border-top: 1px solid var(--roit-blue-neon);
+    border-bottom: 1px solid var(--roit-blue-neon);
+}
+
+.marquee-content {
+    display: inline-block;
+    animation: marquee 20s linear infinite;
+    font-family: var(--font-outfit);
+    font-weight: 900;
+    font-size: 48px;
+    color: var(--bg-darkest);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+.marquee-content span {
+    margin: 0 16px;
+}
+
+.marquee-content .dot {
+    color: var(--roit-blue-neon);
+    font-size: 32px;
+    vertical-align: middle;
+}
+
+@keyframes marquee {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); } /* Requires duplicated content in HTML */
+}
+
+/* ---------------------------------------------------
+   BENTO BOX FEATURES
+   --------------------------------------------------- */
+.features-section {
+    padding: 120px 48px;
+    background-color: var(--bg-darker);
+    position: relative;
+    z-index: 5;
+}
+
+.features-header {
+    text-align: center;
+    margin-bottom: 80px;
+}
+
+.features-header h2 {
+    font-family: var(--font-outfit);
+    font-weight: 800;
+    font-size: 48px;
+    margin-bottom: 16px;
+}
+
+.features-header p {
+    color: var(--text-gray);
+    font-size: 18px;
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+.bento-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(2, 300px);
+    gap: 24px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.bento-card {
+    background-color: var(--bg-card);
+    border-radius: 24px;
+    padding: 40px;
+    display: flex;
+    flex-direction: column;
+    border: 1px solid rgba(255,255,255,0.05);
+    transition: transform 0.3s ease, border-color 0.3s ease;
+    overflow: hidden;
+    position: relative;
+}
+
+.bento-card:hover {
+    transform: translateY(-5px);
+    border-color: rgba(24, 119, 242, 0.3);
+}
+
+.card-tall {
+    grid-row: span 2;
+}
+
+.card-wide {
+    grid-column: span 2;
+}
+
+.bg-blue {
+    background: var(--roit-blue-gradient);
+    color: var(--bg-darkest);
+}
+
+.bg-blue p {
+    color: rgba(5,5,5,0.8);
+}
+
+.bg-blue h3 {
+    color: var(--bg-darkest);
+}
+
+.bento-icon {
+    font-size: 32px;
+    margin-bottom: 24px;
+    color: var(--roit-blue-neon);
+}
+
+.bg-blue .bento-icon {
+    color: var(--bg-darkest);
+}
+
+.bento-card h3 {
+    font-family: var(--font-outfit);
+    font-size: 28px;
+    font-weight: 700;
+    margin-bottom: 16px;
+}
+
+.bento-card p {
+    font-size: 16px;
+    color: var(--text-gray);
+    line-height: 1.5;
+}
+
+/* Abstract Mockup Visuals inside Bento */
+.bento-visual {
+    margin-top: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding-top: 32px;
+}
+
+.mockup-bar {
+    height: 12px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 6px;
+}
+
+.mockup-bar:nth-child(1) { background: var(--roit-blue-core); }
+.mockup-bar:nth-child(2) { background: var(--roit-blue-neon); }
+
+/* ---------------------------------------------------
+   FOOTER
+   --------------------------------------------------- */
+.landing-footer {
+    padding: 48px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid rgba(255,255,255,0.05);
+    background-color: var(--bg-darkest);
+}
+
+.footer-logo {
+    font-family: var(--font-outfit);
+    font-weight: 900;
+    font-size: 24px;
+}
+
+.landing-footer p {
+    color: var(--text-gray);
+    font-size: 14px;
+}
+
+.footer-links a {
+    color: var(--text-white);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+    .bento-grid {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto;
+    }
+    .card-tall, .card-wide {
+        grid-column: span 1;
+        grid-row: span 1;
+    }
+    .hero-title {
+        font-size: 48px;
+    }
+    .landing-nav {
+        padding: 24px;
+    }
+    .hero-subtitle {
+        font-size: 16px;
+    }
+}
