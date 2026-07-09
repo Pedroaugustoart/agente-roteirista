@@ -8,13 +8,13 @@
     --roit-blue-neon: #00E5FF;     
     --roit-blue-gradient: linear-gradient(135deg, #1877F2 0%, #00E5FF 100%);
     
-    /* Light Theme */
-    --bg-page: #FDFDFD;
-    --bg-card: #FFFFFF;
-    --bg-gray: #F4F5F7;
+    /* Dark Theme */
+    --bg-page: #09090B;
+    --bg-card: #121217;
+    --bg-gray: #1E1E24;
     
-    --text-primary: #1A1A1A;
-    --text-secondary: #5E5E66;
+    --text-primary: #FFFFFF;
+    --text-secondary: #A0A0AA;
     
     --font-outfit: 'Outfit', sans-serif;
     --font-inter: 'Inter', sans-serif;
@@ -46,7 +46,7 @@ body {
     justify-content: space-between;
     align-items: center;
     z-index: 100;
-    background: rgba(253, 253, 253, 0.8);
+    background: rgba(9, 9, 11, 0.8);
     backdrop-filter: blur(12px);
     border-bottom: 1px solid rgba(0,0,0,0.05);
 }
@@ -111,7 +111,7 @@ body {
     left: 0;
     width: 100%;
     height: 40vh;
-    background: linear-gradient(to bottom, rgba(253,253,253,0) 0%, rgba(253,253,253,1) 100%);
+    background: linear-gradient(to bottom, rgba(9,9,11,0) 0%, rgba(9,9,11,1) 100%);
     z-index: 2;
     pointer-events: none;
 }
@@ -166,8 +166,8 @@ body {
 .btn-hero-cta {
     display: inline-flex;
     align-items: center;
-    background: var(--text-primary);
-    color: var(--bg-card);
+    background: #FFFFFF;
+    color: #09090B;
     font-family: var(--font-inter);
     font-weight: 500;
     font-size: 16px;
@@ -180,7 +180,7 @@ body {
 
 .btn-hero-cta:hover {
     transform: translateY(-2px);
-    background: #333333;
+    background: #E0E0E0;
 }
 
 .btn-hero-cta i {
@@ -212,14 +212,14 @@ body {
     padding: 48px;
     display: flex;
     flex-direction: column;
-    border: 1px solid rgba(0,0,0,0.04);
-    box-shadow: 0 10px 40px rgba(0,0,0,0.02);
+    border: 1px solid rgba(255,255,255,0.05);
+    box-shadow: 0 10px 40px rgba(0,0,0,0.2);
     transition: transform 0.3s ease;
 }
 
 .feature-card:hover {
     transform: translateY(-5px);
-    box-shadow: 0 15px 50px rgba(0,0,0,0.04);
+    box-shadow: 0 15px 50px rgba(0,0,0,0.4);
 }
 
 .feature-icon {
@@ -250,7 +250,7 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-top: 1px solid rgba(0,0,0,0.05);
+    border-top: 1px solid rgba(255,255,255,0.05);
     background-color: var(--bg-page);
 }
 

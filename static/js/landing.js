@@ -46,7 +46,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         draw() {
-            ctx.fillStyle = 'rgba(24, 119, 242, 0.4)'; // Roit Blue core
+            ctx.fillStyle = '#00E5FF';
             ctx.beginPath();
             ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
             ctx.closePath();
@@ -100,8 +100,7 @@ document.addEventListener('DOMContentLoaded', () => {
                              
                 if (distance < (width/7) * (height/7)) {
                     opacityValue = 1 - (distance / 20000);
-                    // Blue lines for light theme
-                    ctx.strokeStyle = `rgba(24, 119, 242, ${opacityValue * 0.4})`;
+                    ctx.strokeStyle = `rgba(24, 119, 242, ${opacityValue})`;
                     ctx.lineWidth = 1;
                     ctx.beginPath();
                     ctx.moveTo(particles[a].x, particles[a].y);
@@ -116,7 +115,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                     + ((particles[a].y - mouse.y) * (particles[a].y - mouse.y));
                 if (distanceToMouse < 20000) {
                     opacityValue = 1 - (distanceToMouse / 20000);
-                    ctx.strokeStyle = `rgba(0, 229, 255, ${opacityValue * 0.6})`;
+                    ctx.strokeStyle = `rgba(0, 229, 255, ${opacityValue})`;
                     ctx.lineWidth = 1.5;
                     ctx.beginPath();
                     ctx.moveTo(particles[a].x, particles[a].y);
