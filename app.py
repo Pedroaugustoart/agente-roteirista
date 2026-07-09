@@ -252,7 +252,9 @@ def generate():
         return jsonify({"session_id": session_id, "roteiro_id": roteiro_id, "script": script})
     except Exception as e:
         logger.error(f"Erro na geração do roteiro: {e}")
-        return jsonify({"error": "Não foi possível gerar o roteiro no momento."}), 500
+        import traceback
+        traceback.print_exc()
+        return jsonify({"error": f"Erro interno: {str(e)}"}), 500
 
 @app.route("/api/chat", methods=["POST"])
 @login_required
