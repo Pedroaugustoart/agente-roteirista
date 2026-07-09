@@ -28,7 +28,9 @@
         <aside class="sidebar">
             <div class="sidebar-header">
                 <div class="logo-box">
-                    <div class="logo-text">Roit</div>
+                    <a href="/">
+                        <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Roit Logo" class="sidebar-logo-img">
+                    </a>
                 </div>
                 <button id="btn-new-roteiro" class="btn-new-roteiro">
                     <i class="fa-solid fa-plus"></i> Novo roteiro
@@ -63,7 +65,7 @@
                 </nav>
 
                 <div class="header-logo-outline">
-                    <h1>Roit</h1>
+                    <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Roit Logo" class="header-logo-img">
                 </div>
                 
                 <div class="header-user-profile">

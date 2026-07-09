@@ -81,17 +81,13 @@ body {
 
 .logo-box {
     align-self: flex-start;
-    border: 1.5px solid var(--roit-white);
-    padding: 8px 20px;
-    border-radius: 4px;
+    padding: 0;
 }
 
-.logo-text {
-    font-family: var(--font-outfit);
-    font-weight: 800;
-    font-size: 24px;
-    letter-spacing: 0.5px;
-    color: var(--roit-white);
+.sidebar-logo-img {
+    height: 40px;
+    width: auto;
+    object-fit: contain;
 }
 
 .btn-new-roteiro {
@@ -244,14 +240,11 @@ body {
     align-items: center;
 }
 
-.header-logo-outline h1 {
-    font-family: var(--font-outfit);
-    font-size: 40px;
-    font-weight: 800;
-    letter-spacing: 3px;
-    color: transparent;
-    -webkit-text-stroke: 1px var(--roit-white);
-    text-transform: uppercase;
+.header-logo-img {
+    height: 48px;
+    width: auto;
+    object-fit: contain;
+    opacity: 0.8;
 }
 
 .header-user-profile {
