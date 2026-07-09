@@ -38,7 +38,13 @@
             </div>
             
             <div class="sidebar-content">
-                <h3 class="section-title">Roteiros feitos:</h3>
+                <nav class="sidebar-nav">
+                    <a href="#" class="nav-item active"><i class="fa-solid fa-message"></i> Continuar conversa</a>
+                    <a href="#" class="nav-item"><i class="fa-solid fa-clock-rotate-left"></i> Recentes</a>
+                    <a href="#" class="nav-item disabled" title="Em breve"><i class="fa-solid fa-star"></i> Favoritos</a>
+                    <a href="#" class="nav-item disabled" title="Em breve"><i class="fa-solid fa-layer-group"></i> Templates</a>
+                </nav>
+                <h3 class="section-title">Histórico</h3>
                 <div id="history-list" class="history-list-box">
                     <!-- Lista de roteiros carregada dinamicamente via JS -->
                     <p class="empty-state">Faça login para ver seu histórico.</p>
@@ -90,26 +96,65 @@
                 <div id="tab-generator" class="tab-panel active">
                     
                     <!-- TELA A: FORMULÁRIO COMPLETO (Home Page) -->
-                    <section id="form-section" class="form-section">
-                        <div id="conversational-ui" class="conversational-ui">
+                    <section id="form-section" class="form-section split-section">
+                        
+                        <!-- Painel de Conversa (Esquerda) -->
+                        <div class="split-panel-chat conversational-panel">
+                            
+                            <!-- Bloco de Boas Vindas -->
+                            <div class="welcome-block" id="welcome-block">
+                                <div class="welcome-icon"><i class="fa-solid fa-robot"></i></div>
+                                <h3>Olá, eu sou o Roit.</h3>
+                                <p>Vou construir seu roteiro junto com você em 3 passos:</p>
+                                <ul class="welcome-steps">
+                                    <li><span>1</span> Conte sua ideia central.</li>
+                                    <li><span>2</span> Eu farei perguntas estratégicas.</li>
+                                    <li><span>3</span> Você recebe um roteiro pronto.</li>
+                                </ul>
+                            </div>
+                            
                             <div class="chat-feed" id="chat-feed">
                                 <!-- As perguntas da IA e respostas do usuário entrarão aqui via JS -->
                             </div>
                             
-                            <!-- Input Bar Fixo no final (tipo ChatGPT) -->
+                            <!-- Input Bar Fixo no final -->
                             <div class="chat-input-container">
                                 <div class="chat-input-bar" id="chat-input-bar">
-                                    <input type="text" id="chat-input-field" placeholder="Digite sua resposta..." autocomplete="off">
-                                    <button id="btn-chat-send" class="btn-chat-send" title="Enviar resposta">
+                                    <input type="text" id="chat-input-field" placeholder="Me conte sua ideia..." autocomplete="off">
+                                    <button id="btn-chat-send" class="btn-chat-send premium-btn" title="Enviar resposta">
                                         <i class="fa-solid fa-arrow-up"></i>
                                     </button>
                                 </div>
-                                <!-- Alternativa para botões de múltipla escolha -->
-                                <div class="chat-options-bar" id="chat-options-bar" style="display: none;">
-                                    <!-- Botões gerados via JS (ex: TikTok, Reels) -->
+                                <div class="chat-options-bar" id="chat-options-bar" style="display: none;"></div>
+                            </div>
+                        </div>
+
+                        <!-- Painel de Briefing em Tempo Real (Direita) -->
+                        <div class="split-panel-script briefing-panel" id="briefing-panel">
+                            <div class="script-card-header briefing-header">
+                                <span class="script-title-label"><i class="fa-solid fa-bolt"></i> Roit <span class="badge">Estrategista</span></span>
+                            </div>
+                            <div class="script-content briefing-content">
+                                <h4>Entendendo seu briefing</h4>
+                                <ul class="briefing-list">
+                                    <li><span class="lbl">Objetivo</span> <span class="val" id="brf-objetivo">—</span></li>
+                                    <li><span class="lbl">Plataforma</span> <span class="val" id="brf-plataforma">—</span></li>
+                                    <li><span class="lbl">Estrutura</span> <span class="val" id="brf-tipo">—</span></li>
+                                    <li><span class="lbl">Público & Tom</span> <span class="val" id="brf-publico">—</span></li>
+                                    <li><span class="lbl">Problema</span> <span class="val" id="brf-mensagem_dor">—</span></li>
+                                    <li><span class="lbl">Duração</span> <span class="val" id="brf-duracao">—</span></li>
+                                    <li><span class="lbl">CTA</span> <span class="val" id="brf-cta">—</span></li>
+                                </ul>
+                                
+                                <div class="progress-box">
+                                    <div class="progress-label" id="progress-label">Etapa 1 de 6</div>
+                                    <div class="progress-bar-bg">
+                                        <div class="progress-bar-fill" id="progress-bar-fill" style="width: 16%;"></div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
+
                     </section>
 
                     <!-- TELA B: SPLIT SCREEN (Chat e Roteiro pronto) -->

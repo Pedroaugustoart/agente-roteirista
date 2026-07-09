@@ -268,14 +268,50 @@ function switchToTab(tabId) {
 // --- CONVERSATIONAL UI STATE MACHINE ---
 let convStep = 0;
 const convSteps = [
-    { key: "objetivo", prompt: "Olá. Qual é o objetivo principal do vídeo que vamos criar hoje?", type: "text", placeholder: "Ex: Vender meu curso de design, explicar como investir..." },
-    { key: "plataforma", prompt: "Excelente. Em qual plataforma você planeja postar?", type: "options", options: ["TikTok", "Instagram Reels", "YouTube Shorts"] },
-    { key: "tipo", prompt: "Qual será o foco narrativo?", type: "options", options: ["storytelling", "viral", "analise", "educativo"] },
-    { key: "publico", prompt: "Para quem estamos falando? (Público-alvo e Tom de voz)", type: "text", placeholder: "Ex: Jovens de 20 anos. Tom animado e informal." },
-    { key: "mensagem_dor", prompt: "Qual problema ou dor do seu público este vídeo resolve?", type: "text", placeholder: "Ex: Eles não sabem precificar seus serviços." },
-    { key: "duracao", prompt: "Qual a duração estimada?", type: "text", placeholder: "Ex: Cerca de 30 a 60 segundos." },
-    { key: "cta", prompt: "E para fechar: Qual será a chamada para ação (CTA) no final do vídeo?", type: "text", placeholder: "Ex: Comente EU QUERO para receber o link no direct." }
+    { key: "objetivo", prompt: "Sobre o que será o seu vídeo?", type: "options", options: ["Quero vender um produto", "Quero viralizar um vídeo", "Quero gerar autoridade", "Quero contar uma história"] },
+    { key: "plataforma", prompt: "Onde esse vídeo vai morar?", type: "options", options: ["TikTok", "Instagram Reels", "YouTube Shorts"] },
+    { key: "tipo", prompt: "Qual será a estrutura principal do roteiro?", type: "options", options: ["storytelling", "viral", "analise", "educativo"] },
+    { key: "publico", prompt: "Quem precisa assistir esse vídeo? (Ex: Jovens de 20 anos querendo investir)", type: "text", placeholder: "Descreva seu público-alvo..." },
+    { key: "mensagem_dor", prompt: "Qual a dor ou problema que esse vídeo resolve na vida deles?", type: "text", placeholder: "Ex: Eles não sabem como organizar suas finanças." },
+    { key: "duracao", prompt: "Quanto tempo você quer que o vídeo dure em média?", type: "options", options: ["15 a 30 segundos", "Até 1 minuto", "Mais de 1 minuto"] },
+    { key: "cta", prompt: "O que você quer que as pessoas façam no final do vídeo?", type: "text", placeholder: "Ex: Comentar 'EU QUERO' para receber o link." }
 ];
+
+const reflexiveMessages = [
+    "Perfeito.",
+    "Entendi perfeitamente.",
+    "Excelente.",
+    "Ótima escolha, vou adaptar o tom para isso.",
+    "Anotado.",
+    "Certo. Isso muda bastante a dinâmica, vou calibrar o foco.",
+    "Boa."
+];
+
+function updateBriefingPanel() {
+    const fields = ["objetivo", "plataforma", "tipo", "publico", "mensagem_dor", "duracao", "cta"];
+    fields.forEach(field => {
+        const el = document.getElementById(`brf-${field}`);
+        if (el) {
+            const val = briefingData[field];
+            if (val && val !== "") {
+                if (el.textContent !== val) {
+                    el.textContent = val.length > 30 ? val.substring(0, 30) + "..." : val;
+                    el.classList.add("filled", "highlight");
+                    setTimeout(() => el.classList.remove("highlight"), 1000);
+                }
+            }
+        }
+    });
+    
+    // Atualiza Barra de Progresso
+    const perc = Math.round((convStep / convSteps.length) * 100);
+    const fill = document.getElementById("progress-bar-fill");
+    const label = document.getElementById("progress-label");
+    if (fill && label) {
+        fill.style.width = `${perc}%`;
+        label.textContent = `Etapa ${convStep} de ${convSteps.length}`;
+    }
+}
 
 function initConversationalUI() {
     convStep = 0;
@@ -284,6 +320,16 @@ function initConversationalUI() {
         plataforma: "", tipo: "", referencias: "", duracao: "",
         publico: "", cta: "", objetivo: "", mensagem_dor: "", tom: "Didático / Informativo / Calmo"
     };
+    
+    // Esconde o welcome block se a pessoa interagir
+    const welcome = document.getElementById("welcome-block");
+    if(welcome) {
+        welcome.classList.remove("fade-out");
+        welcome.style.display = "block";
+    }
+    
+    // Inicializa barra
+    updateBriefingPanel();
     
     // Usando tanto onclick quanto listener para garantir
     btnChatSendNew.onclick = (e) => { e.preventDefault(); handleChatSend(); };
@@ -300,6 +346,8 @@ function initConversationalUI() {
 }
 
 function askNextQuestion() {
+    updateBriefingPanel();
+    
     if (convStep >= convSteps.length) {
         appendConversationalMessage("system", "Tudo pronto. Iniciando sinapses cerebrais para gerar seu roteiro mágico...");
         chatInputBar.style.display = "none";
@@ -312,7 +360,7 @@ function askNextQuestion() {
     // Fade out previous messages
     document.querySelectorAll(".chat-message").forEach(el => el.classList.add("faded"));
     
-    // Add typing indicator
+    // Mostra indicador de digitação
     const typingId = "typing-" + Date.now();
     chatFeed.insertAdjacentHTML("beforeend", `
         <div class="chat-message system" id="${typingId}">
@@ -329,30 +377,43 @@ function askNextQuestion() {
         const typingEl = document.getElementById(typingId);
         if (typingEl) typingEl.remove();
         
-        appendConversationalMessage("system", stepData.prompt);
-        
-        if (stepData.type === "options") {
-            chatInputBar.style.display = "none";
-            chatOptionsBar.style.display = "flex";
-            chatOptionsBar.innerHTML = "";
-            stepData.options.forEach(opt => {
-                const btn = document.createElement("button");
-                btn.className = "chat-option-btn";
-                btn.textContent = opt.charAt(0).toUpperCase() + opt.slice(1);
-                btn.onclick = () => handleChatOption(opt);
-                chatOptionsBar.appendChild(btn);
-            });
-        } else {
-            chatInputBar.style.display = "flex";
-            chatOptionsBar.style.display = "none";
-            chatInputField.value = "";
-            chatInputField.placeholder = stepData.placeholder || "Digite sua resposta...";
-            chatInputField.focus();
+        // Manda reflexão se não for o primeiro passo
+        if (convStep > 0) {
+            const reflex = reflexiveMessages[Math.floor(Math.random() * reflexiveMessages.length)];
+            appendConversationalMessage("system", reflex);
         }
-    }, 600); // 600ms of "thinking"
+        
+        // Dispara a pergunta após um mini-delay simulando raciocínio humano
+        setTimeout(() => {
+            appendConversationalMessage("system", stepData.prompt);
+            
+            if (stepData.type === "options") {
+                chatInputBar.style.display = "none";
+                chatOptionsBar.style.display = "flex";
+                chatOptionsBar.innerHTML = "";
+                stepData.options.forEach(opt => {
+                    const btn = document.createElement("button");
+                    btn.className = "chat-option-btn";
+                    btn.textContent = opt.charAt(0).toUpperCase() + opt.slice(1);
+                    btn.onclick = () => handleChatOption(opt);
+                    chatOptionsBar.appendChild(btn);
+                });
+            } else {
+                chatInputBar.style.display = "flex";
+                chatOptionsBar.style.display = "none";
+                chatInputField.value = "";
+                chatInputField.placeholder = stepData.placeholder || "Digite sua resposta...";
+                chatInputField.focus();
+            }
+        }, 500);
+        
+    }, 600); // 600ms de "pensamento"
 }
 
 function handleChatSend() {
+    const welcome = document.getElementById("welcome-block");
+    if(welcome) welcome.classList.add("fade-out");
+    
     const val = chatInputField.value.trim();
     if (!val) return;
     
@@ -367,6 +428,9 @@ function handleChatSend() {
 }
 
 function handleChatOption(opt) {
+    const welcome = document.getElementById("welcome-block");
+    if(welcome) welcome.classList.add("fade-out");
+
     const stepData = convSteps[convStep];
     briefingData[stepData.key] = opt;
     
@@ -402,15 +466,47 @@ async function gerarNovoRoteiro() {
 
     chatMessages.innerHTML = "";
     scriptViewport.innerHTML = `
-        <div class="loading-state">
-            <i class="fa-solid fa-spinner fa-spin"></i>
-            <p>Roit está analisando seu briefing e base de conhecimento...</p>
+        <div class="loading-state" style="margin-top: 40px;">
+            <div class="loading-steps">
+                <div class="loading-step active" id="ls-1"><i class="fa-solid fa-spinner"></i> Entendendo seu objetivo e público...</div>
+                <div class="loading-step" id="ls-2"><i class="fa-solid fa-check"></i> Definindo a melhor estrutura...</div>
+                <div class="loading-step" id="ls-3"><i class="fa-solid fa-check"></i> Pesquisando na base de conhecimento (RAG)...</div>
+                <div class="loading-step" id="ls-4"><i class="fa-solid fa-check"></i> Criando ganchos de retenção...</div>
+                <div class="loading-step" id="ls-5"><i class="fa-solid fa-check"></i> Escrevendo roteiro final...</div>
+            </div>
         </div>
     `;
 
     appendMessage("sistema", "Iniciando motor de inteligência artificial Roit...");
     showTypingIndicator();
     pararAudioLocucao();
+
+    // Inicia a ilusão de trabalho (Labor Illusion)
+    const laborSteps = [
+        { id: "ls-1", delay: 1500 },
+        { id: "ls-2", delay: 3500 },
+        { id: "ls-3", delay: 6000 },
+        { id: "ls-4", delay: 9000 },
+        { id: "ls-5", delay: 12000 }
+    ];
+
+    laborSteps.forEach((step, index) => {
+        setTimeout(() => {
+            if (index > 0) {
+                const prev = document.getElementById(laborSteps[index - 1].id);
+                if (prev) {
+                    prev.classList.remove("active");
+                    prev.classList.add("done");
+                    prev.querySelector("i").className = "fa-solid fa-check-circle";
+                }
+            }
+            const curr = document.getElementById(step.id);
+            if (curr) {
+                curr.classList.add("active");
+                curr.querySelector("i").className = "fa-solid fa-spinner";
+            }
+        }, step.delay);
+    });
 
     try {
         const response = await fetch("/api/generate", {

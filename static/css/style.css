@@ -1295,3 +1295,271 @@ body {
     100% { transform: scale(1); }
 }
 
+
+/* NOVO REDESIGN UX CONVERSACIONAL (FASE 11) */
+
+/* Sidebar Navigation */
+.sidebar-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 24px;
+}
+.sidebar-nav .nav-item {
+    color: var(--roit-text-muted);
+    text-decoration: none;
+    font-size: 14px;
+    padding: 10px 16px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: all var(--transition-fast);
+}
+.sidebar-nav .nav-item i {
+    width: 16px;
+    text-align: center;
+}
+.sidebar-nav .nav-item:hover:not(.disabled) {
+    background-color: rgba(255, 255, 255, 0.05);
+    color: var(--roit-text-primary);
+}
+.sidebar-nav .nav-item.active {
+    background-color: rgba(0, 229, 255, 0.1);
+    color: var(--roit-blue-neon);
+}
+.sidebar-nav .nav-item.disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+/* Welcome Block */
+.welcome-block {
+    background: linear-gradient(145deg, rgba(20, 20, 26, 0.8) 0%, rgba(10, 10, 14, 0.8) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 16px;
+    padding: 32px;
+    margin: auto;
+    max-width: 480px;
+    text-align: center;
+    transition: opacity 0.5s ease, transform 0.5s ease;
+}
+.welcome-block.fade-out {
+    opacity: 0;
+    transform: translateY(-20px);
+    pointer-events: none;
+    position: absolute;
+}
+.welcome-icon {
+    font-size: 32px;
+    color: var(--roit-blue-neon);
+    margin-bottom: 16px;
+    text-shadow: 0 0 20px rgba(0, 229, 255, 0.4);
+}
+.welcome-block h3 {
+    font-size: 24px;
+    margin-bottom: 12px;
+    color: var(--roit-text-primary);
+}
+.welcome-block p {
+    color: var(--roit-text-muted);
+    font-size: 15px;
+    margin-bottom: 24px;
+}
+.welcome-steps {
+    list-style: none;
+    padding: 0;
+    text-align: left;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+.welcome-steps li {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    color: var(--roit-text-secondary);
+    font-size: 15px;
+    background: rgba(0,0,0,0.2);
+    padding: 12px 20px;
+    border-radius: 12px;
+    border: 1px solid rgba(255,255,255,0.02);
+}
+.welcome-steps li span {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: rgba(0, 229, 255, 0.1);
+    color: var(--roit-blue-neon);
+    font-weight: 600;
+    font-size: 13px;
+}
+
+/* Painel de Conversa e Briefing */
+.form-section.split-section {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    gap: 24px;
+}
+.conversational-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    max-width: 800px;
+    margin: 0 auto;
+}
+.briefing-panel {
+    width: 320px;
+    flex-shrink: 0;
+    background-color: var(--bg-card);
+    border: var(--border-roit-thin);
+    border-radius: var(--border-radius-main);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+.briefing-header {
+    background: rgba(0,0,0,0.4);
+    padding: 16px 24px;
+    border-bottom: var(--border-roit-thin);
+}
+.briefing-header .badge {
+    background: rgba(0, 229, 255, 0.15);
+    color: var(--roit-blue-neon);
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 12px;
+    margin-left: 8px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+.briefing-content {
+    padding: 24px;
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+.briefing-content h4 {
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--roit-text-muted);
+    margin-bottom: 24px;
+}
+.briefing-list {
+    list-style: none;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    flex: 1;
+}
+.briefing-list li {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.briefing-list .lbl {
+    font-size: 12px;
+    color: var(--roit-text-muted);
+}
+.briefing-list .val {
+    font-size: 14px;
+    color: var(--roit-text-secondary);
+    transition: color 0.3s ease, text-shadow 0.3s ease;
+}
+.briefing-list .val.filled {
+    color: var(--roit-text-primary);
+}
+.briefing-list .val.highlight {
+    color: var(--roit-blue-neon);
+    text-shadow: 0 0 10px rgba(0, 229, 255, 0.3);
+}
+
+/* Barra de Progresso */
+.progress-box {
+    margin-top: 24px;
+    padding-top: 24px;
+    border-top: var(--border-roit-thin);
+}
+.progress-label {
+    font-size: 12px;
+    color: var(--roit-text-muted);
+    margin-bottom: 8px;
+    text-align: right;
+}
+.progress-bar-bg {
+    width: 100%;
+    height: 4px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 2px;
+    overflow: hidden;
+}
+.progress-bar-fill {
+    height: 100%;
+    background: var(--roit-blue-neon);
+    border-radius: 2px;
+    transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 0 10px rgba(0, 229, 255, 0.5);
+}
+
+/* Premium Send Button */
+.premium-btn {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: var(--roit-text-primary);
+    color: #000;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.premium-btn:hover {
+    transform: scale(1.1);
+    box-shadow: 0 0 20px rgba(255,255,255,0.2);
+}
+.premium-btn:active {
+    transform: scale(0.95);
+}
+
+/* Loading Sequencial */
+.loading-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    max-width: 300px;
+    margin: 0 auto;
+}
+.loading-step {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: var(--roit-text-muted);
+    font-size: 15px;
+    opacity: 0.5;
+    transition: all 0.3s ease;
+}
+.loading-step.active {
+    opacity: 1;
+    color: var(--roit-text-primary);
+}
+.loading-step.done {
+    opacity: 1;
+    color: var(--roit-blue-neon);
+}
+.loading-step i {
+    width: 20px;
+    text-align: center;
+}
+.loading-step.active i {
+    animation: spin 1s linear infinite;
+}
