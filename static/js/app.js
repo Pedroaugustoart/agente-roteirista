@@ -441,9 +441,15 @@ function handleChatOption(opt) {
 }
 
 function appendConversationalMessage(role, text) {
+    if (!chatFeed) return;
     const msg = document.createElement("div");
     msg.className = `chat-message ${role}`;
-    msg.innerHTML = `<div class="message-bubble">${DOMPurify.sanitize(text)}</div>`;
+    
+    const bubble = document.createElement("div");
+    bubble.className = "message-bubble";
+    bubble.textContent = text; // Mais seguro e sem depender do DOMPurify
+    
+    msg.appendChild(bubble);
     chatFeed.appendChild(msg);
     scrollToBottomFeed();
 }
