@@ -56,11 +56,17 @@ const formSection = document.getElementById("form-section");
 const splitSection = document.getElementById("split-section");
 
 const btnNewRoteiro = document.getElementById("btn-new-roteiro");
-const btnGenerateScript = document.getElementById("btn-generate-script");
 
 const chatMessages = document.getElementById("chat-messages");
 const chatInput = document.getElementById("chat-input");
 const btnSendChat = document.getElementById("btn-send-chat");
+
+// Elementos da Nova Conversational UI
+const chatFeed = document.getElementById("chat-feed");
+const chatInputBar = document.getElementById("chat-input-bar");
+const chatInputField = document.getElementById("chat-input-field");
+const btnChatSendNew = document.getElementById("btn-chat-send");
+const chatOptionsBar = document.getElementById("chat-options-bar");
 
 // Novos Elementos de Áudio, Abas e Canvas
 const tabGenerator = document.getElementById("tab-generator");
@@ -84,9 +90,8 @@ const btnDownload = document.getElementById("btn-download");
 
 document.addEventListener("DOMContentLoaded", () => {
     verificarSessao();
-    initSelectors();
+    initConversationalUI();
     initAuthEvents();
-    initFormActions();
     initChatActions();
     initSidebarEvents();
     initTabsEvents();
@@ -260,144 +265,130 @@ function switchToTab(tabId) {
     }
 }
 
-// --- SELETORES DA PÁGINA ÚNICA ---
-function initSelectors() {
-    const options = document.querySelectorAll("#platform-selector .platform-option");
-    options.forEach(opt => {
-        opt.addEventListener("click", () => {
-            options.forEach(o => o.classList.remove("selected"));
-            opt.classList.add("selected");
-            briefingData.plataforma = opt.getAttribute("data-val");
-        });
-    });
+// --- CONVERSATIONAL UI STATE MACHINE ---
+let convStep = 0;
+const convSteps = [
+    { key: "objetivo", prompt: "Olá. Qual é o objetivo principal do vídeo que vamos criar hoje?", type: "text" },
+    { key: "plataforma", prompt: "Excelente. Em qual plataforma você planeja postar?", type: "options", options: ["TikTok", "Instagram Reels", "YouTube Shorts"] },
+    { key: "tipo", prompt: "Qual será o foco narrativo?", type: "options", options: ["storytelling", "viral", "analise", "educativo"] },
+    { key: "publico", prompt: "Para quem estamos falando? (Público-alvo e Tom de voz)", type: "text" },
+    { key: "mensagem_dor", prompt: "Qual problema ou dor do seu público este vídeo resolve?", type: "text" },
+    { key: "duracao", prompt: "Qual a duração estimada? (ex: 30s, 1min)", type: "text" },
+    { key: "cta", prompt: "E para fechar: Qual será a chamada para ação (CTA) no final do vídeo?", type: "text" }
+];
 
-    const focusBtns = document.querySelectorAll("#focus-selector .focus-btn");
-    focusBtns.forEach(btn => {
-        btn.addEventListener("click", () => {
-            focusBtns.forEach(b => b.classList.remove("selected"));
-            btn.classList.add("selected");
-            briefingData.tipo = btn.getAttribute("data-val");
-        });
+function initConversationalUI() {
+    convStep = 0;
+    chatFeed.innerHTML = "";
+    briefingData = {
+        plataforma: "", tipo: "", referencias: "", duracao: "",
+        publico: "", cta: "", objetivo: "", mensagem_dor: "", tom: "Didático / Informativo / Calmo"
+    };
+    
+    btnChatSendNew.addEventListener("click", handleChatSend);
+    chatInputField.addEventListener("keypress", (e) => {
+        if (e.key === "Enter") handleChatSend();
     });
+    
+    // Inicia a primeira pergunta
+    askNextQuestion();
 }
 
-// --- HISTÓRICO DA SIDEBAR ---
-async function carregarHistorico() {
-    try {
-        const response = await fetch("/api/history");
-        const data = await response.json();
-        if (response.ok) {
-            historyList.innerHTML = "";
-            if (data.roteiros.length === 0) {
-                historyList.innerHTML = `<p class="empty-state">Nenhum roteiro salvo.</p>`;
-                return;
-            }
-            
-            data.roteiros.forEach(item => {
-                const card = document.createElement("div");
-                card.classList.add("history-item");
-                card.setAttribute("data-id", item.id);
-                card.innerHTML = `
-                    <div class="history-item-title">${DOMPurify.sanitize(item.titulo)}</div>
-                    <div class="history-item-meta">
-                        <span>${DOMPurify.sanitize(item.plataforma)}</span>
-                        <span>${item.data_criacao}</span>
-                    </div>
-                `;
-                
-                card.addEventListener("click", () => carregarRoteiroHistorico(item.id));
-                historyList.appendChild(card);
-            });
-        }
-    } catch (err) {
-        console.error("Erro ao carregar histórico:", err);
+function askNextQuestion() {
+    if (convStep >= convSteps.length) {
+        appendConversationalMessage("system", "Tudo pronto. Iniciando sinapses cerebrais para gerar seu roteiro mágico...");
+        chatInputBar.style.display = "none";
+        setTimeout(() => gerarNovoRoteiro(), 1500);
+        return;
     }
-}
-
-async function carregarRoteiroHistorico(id) {
-    try {
-        document.querySelectorAll(".history-item").forEach(item => {
-            if (item.getAttribute("data-id") === id) {
-                item.classList.add("active");
-            } else {
-                item.classList.remove("active");
-            }
-        });
-
-        const response = await fetch(`/api/history/${id}`);
-        const data = await response.json();
+    
+    const stepData = convSteps[convStep];
+    
+    // Fade out previous messages
+    document.querySelectorAll(".chat-message").forEach(el => el.classList.add("faded"));
+    
+    // Add typing indicator
+    const typingId = "typing-" + Date.now();
+    chatFeed.insertAdjacentHTML("beforeend", `
+        <div class="chat-message system" id="${typingId}">
+            <div class="typing-indicator">
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+            </div>
+        </div>
+    `);
+    scrollToBottomFeed();
+    
+    setTimeout(() => {
+        const typingEl = document.getElementById(typingId);
+        if (typingEl) typingEl.remove();
         
-        if (response.ok) {
-            const rot = data.roteiro;
-            preencherInputs(rot.briefing);
-            
-            activeRoteiroId = rot.id;
-            sessionId = "session-" + Math.random().toString(36).substring(2, 9);
-            lastGeneratedScript = rot.conteudo;
-            
-            switchToTab("tab-generator");
-            formSection.style.display = "none";
-            splitSection.style.display = "flex";
-            
-            chatMessages.innerHTML = "";
-            appendMessage("sistema", "Você carregou um roteiro do histórico. Qualquer mensagem enviada abaixo ajustará este roteiro.");
-            exibirRoteiro(rot.conteudo);
-            pararAudioLocucao();
+        appendConversationalMessage("system", stepData.prompt);
+        
+        if (stepData.type === "options") {
+            chatInputBar.style.display = "none";
+            chatOptionsBar.style.display = "flex";
+            chatOptionsBar.innerHTML = "";
+            stepData.options.forEach(opt => {
+                const btn = document.createElement("button");
+                btn.className = "chat-option-btn";
+                btn.textContent = opt.charAt(0).toUpperCase() + opt.slice(1);
+                btn.onclick = () => handleChatOption(opt);
+                chatOptionsBar.appendChild(btn);
+            });
+        } else {
+            chatInputBar.style.display = "flex";
+            chatOptionsBar.style.display = "none";
+            chatInputField.value = "";
+            chatInputField.focus();
         }
-    } catch (err) {
-        console.error("Erro ao obter roteiro do histórico:", err);
-        alert("Erro ao carregar o roteiro.");
-    }
+    }, 600); // 600ms of "thinking"
 }
 
+function handleChatSend() {
+    const val = chatInputField.value.trim();
+    if (!val) return;
+    
+    const stepData = convSteps[convStep];
+    briefingData[stepData.key] = val;
+    
+    appendConversationalMessage("user", val);
+    chatInputField.value = "";
+    
+    convStep++;
+    askNextQuestion();
+}
+
+function handleChatOption(opt) {
+    const stepData = convSteps[convStep];
+    briefingData[stepData.key] = opt;
+    
+    appendConversationalMessage("user", opt.charAt(0).toUpperCase() + opt.slice(1));
+    
+    convStep++;
+    askNextQuestion();
+}
+
+function appendConversationalMessage(role, text) {
+    const msg = document.createElement("div");
+    msg.className = `chat-message ${role}`;
+    msg.innerHTML = `<div class="message-bubble">${DOMPurify.sanitize(text)}</div>`;
+    chatFeed.appendChild(msg);
+    scrollToBottomFeed();
+}
+
+function scrollToBottomFeed() {
+    chatFeed.scrollTop = chatFeed.scrollHeight;
+}
+
+// Adaptação para histórico
 function preencherInputs(briefing) {
     briefingData = { ...briefing };
-    
-    document.getElementById("input-ref").value = briefing.referencias || "";
-    document.getElementById("input-dur").value = briefing.duracao || "";
-    document.getElementById("input-pub").value = briefing.publico || "";
-    document.getElementById("input-cta").value = briefing.cta || "";
-    document.getElementById("input-obj").value = briefing.objetivo || "";
-    document.getElementById("input-prob").value = briefing.mensagem_dor || "";
-    
-    document.querySelectorAll("#platform-selector .platform-option").forEach(opt => {
-        if (opt.getAttribute("data-val") === briefing.plataforma) {
-            opt.classList.add("selected");
-        } else {
-            opt.classList.remove("selected");
-        }
-    });
-
-    document.querySelectorAll("#focus-selector .focus-btn").forEach(btn => {
-        if (btn.getAttribute("data-val") === briefing.tipo) {
-            btn.classList.add("selected");
-        } else {
-            btn.classList.remove("selected");
-        }
-    });
+    // O chat é bypassado se clicar no histórico, vai direto pra Split Screen
 }
 
-// --- FORMULÁRIO E GERAÇÃO ---
-function initFormActions() {
-    btnGenerateScript.addEventListener("click", () => {
-        if (!briefingData.plataforma) return alert("Por favor, selecione uma plataforma.");
-        if (!briefingData.tipo) return alert("Por favor, selecione um foco principal.");
-        
-        briefingData.referencias = document.getElementById("input-ref").value.trim();
-        briefingData.duracao = document.getElementById("input-dur").value.trim();
-        briefingData.publico = document.getElementById("input-pub").value.trim();
-        briefingData.cta = document.getElementById("input-cta").value.trim();
-        briefingData.objetivo = document.getElementById("input-obj").value.trim();
-        briefingData.mensagem_dor = document.getElementById("input-prob").value.trim();
-        
-        if (!briefingData.duracao) return alert("Por favor, informe a duração estimada.");
-        if (!briefingData.cta) return alert("Por favor, preencha o CTA do vídeo.");
-        if (!briefingData.objetivo) return alert("Por favor, informe o objetivo do vídeo.");
-        if (!briefingData.mensagem_dor) return alert("Por favor, informe o problema que o vídeo resolve.");
-
-        gerarNovoRoteiro();
-    });
-}
+// --- GERAÇÃO DE ROTEIRO ---
 
 async function gerarNovoRoteiro() {
     formSection.style.display = "none";

@@ -91,83 +91,24 @@
                     
                     <!-- TELA A: FORMULÁRIO COMPLETO (Home Page) -->
                     <section id="form-section" class="form-section">
-                        <div class="form-grid">
-                            
-                            <!-- Plataforma Principal -->
-                            <div class="form-group span-4">
-                                <label>Plataforma principal</label>
-                                <div class="platform-selector" id="platform-selector">
-                                    <div class="platform-option" data-val="TikTok">
-                                        <i class="fa-brands fa-tiktok"></i>
-                                        <span>TikTok</span>
-                                    </div>
-                                    <div class="platform-option" data-val="Instagram Reels">
-                                        <i class="fa-brands fa-instagram"></i>
-                                        <span>Reels</span>
-                                    </div>
-                                    <div class="platform-option" data-val="YouTube Shorts">
-                                        <i class="fa-brands fa-youtube"></i>
-                                        <span>Shorts</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Foco Principal -->
-                            <div class="form-group span-4">
-                                <label>Foco principal</label>
-                                <div class="focus-selector" id="focus-selector">
-                                    <button type="button" class="focus-btn" data-val="storytelling">Storytelling</button>
-                                    <button type="button" class="focus-btn" data-val="viral">Viral</button>
-                                    <button type="button" class="focus-btn" data-val="analise">Análise</button>
-                                    <button type="button" class="focus-btn" data-val="educativo">Educativo</button>
-                                </div>
-                            </div>
-
-                            <!-- Referências -->
-                            <div class="form-group span-4">
-                                <label for="input-ref">Referências</label>
-                                <input type="text" id="input-ref" placeholder="Ex: Anime, game X, meme Y...">
-                            </div>
-
-                            <!-- Duração Estimada -->
-                            <div class="form-group span-4">
-                                <label for="input-dur">Duração estimada</label>
-                                <input type="text" id="input-dur" placeholder="Ex: 30s, 1min, 5min...">
-                            </div>
-
-                            <!-- Público-Alvo e Tom de Voz -->
-                            <div class="form-group span-4">
-                                <label for="input-pub">Público-alvo e tom de voz</label>
-                                <input type="text" id="input-pub" placeholder="Ex: Jovens investidores com tom divertido, ou advogados com tom sério...">
-                            </div>
-
-                            <!-- CTA -->
-                            <div class="form-group span-4">
-                                <label for="input-cta">CTA</label>
-                                <input type="text" id="input-cta" placeholder="Ex: Comente QUERO, link na bio...">
-                            </div>
-
-                            <!-- Objetivo Principal (Full Width) -->
-                            <div class="form-group span-12">
-                                <label for="input-obj">Objetivo principal</label>
-                                <textarea id="input-obj" placeholder="Descreva em detalhes o que você quer alcançar com este vídeo..." rows="3"></textarea>
-                            </div>
-
-                            <!-- Problema que o vídeo resolve (Full Width) -->
-                            <div class="form-group span-12">
-                                <label for="input-prob">Problema que o vídeo resolve</label>
-                                <textarea id="input-prob" placeholder="Qual a principal dor ou curiosidade que você vai abordar nas falas do vídeo?" rows="3"></textarea>
+                        <div id="conversational-ui" class="conversational-ui">
+                            <div class="chat-feed" id="chat-feed">
+                                <!-- As perguntas da IA e respostas do usuário entrarão aqui via JS -->
                             </div>
                             
-                            <input type="hidden" id="input-tom-hidden" value="Didático / Informativo / Calmo">
-
-                        </div>
-
-                        <!-- Botão de Ação Principal -->
-                        <div class="action-bar">
-                            <button id="btn-generate-script" class="btn-generate-script">
-                                Gerar Roteiro com Roit <i class="fa-solid fa-wand-magic-sparkles"></i>
-                            </button>
+                            <!-- Input Bar Fixo no final (tipo ChatGPT) -->
+                            <div class="chat-input-container">
+                                <div class="chat-input-bar" id="chat-input-bar">
+                                    <input type="text" id="chat-input-field" placeholder="Digite sua resposta..." autocomplete="off">
+                                    <button id="btn-chat-send" class="btn-chat-send" title="Enviar resposta">
+                                        <i class="fa-solid fa-arrow-up"></i>
+                                    </button>
+                                </div>
+                                <!-- Alternativa para botões de múltipla escolha -->
+                                <div class="chat-options-bar" id="chat-options-bar" style="display: none;">
+                                    <!-- Botões gerados via JS (ex: TikTok, Reels) -->
+                                </div>
+                            </div>
                         </div>
                     </section>
 
@@ -234,7 +175,7 @@
                         
                         <!-- Painel lateral informativo sobre como usar o Cérebro Neuronal -->
                         <div class="neural-info-overlay">
-                            <h3>🧠 Cérebro Neuronal (RAG)</h3>
+                            <h3>Cérebro Neuronal (RAG)</h3>
                             <p class="neural-subtitle">Alimente sua IA com PDFs para roteiros personalizados.</p>
                             <div class="neural-steps">
                                 <div class="step-box">

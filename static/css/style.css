@@ -327,156 +327,176 @@ body {
     overflow: hidden;
 }
 
-/* TELA 1: HOME PAGE COM FORMULÁRIO ÚNICO (All-in-one View) */
-.form-section {
+/* TELA 1: CONVERSATIONAL UI */
+.conversational-ui {
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
     height: 100%;
+    width: 100%;
+    max-width: 768px;
+    margin: 0 auto;
+    position: relative;
+}
+
+.chat-feed {
+    flex-grow: 1;
     overflow-y: auto;
-}
-
-.form-grid {
-    display: grid;
-    grid-template-columns: repeat(12, 1fr);
-    gap: 24px;
     padding-bottom: 24px;
-}
-
-.form-group {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 24px;
 }
 
-.span-4 { grid-column: span 4; }
-.span-12 { grid-column: span 12; }
-
-.form-group label {
-    font-family: var(--font-outfit);
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--roit-text-secondary);
-    letter-spacing: 0.3px;
-}
-
-/* Plataforma Selector Options (Mockup Visual) */
-.platform-selector {
+/* Bolhas de Conversa */
+.chat-message {
     display: flex;
-    gap: 12px;
+    flex-direction: column;
+    gap: 8px;
+    max-width: 85%;
+    opacity: 0;
+    transform: translateY(10px);
+    animation: fade-in-up 0.4s ease forwards;
+}
+
+@keyframes fade-in-up {
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.chat-message.system {
+    align-self: flex-start;
+}
+
+.chat-message.user {
+    align-self: flex-end;
+    align-items: flex-end;
+}
+
+.message-label {
+    font-family: var(--font-outfit);
+    font-size: 12px;
+    color: var(--roit-text-muted);
+    font-weight: 500;
+}
+
+.message-bubble {
+    font-family: var(--font-inter);
+    font-size: 15px;
+    line-height: 1.5;
+    padding: 14px 18px;
+    border-radius: var(--border-radius-main);
+}
+
+.system .message-bubble {
+    color: var(--roit-text-primary);
+    background-color: transparent;
+    border: none;
+    padding: 0; /* Minimalista: sem caixa de fundo para a IA */
+    font-size: 18px;
+}
+
+.user .message-bubble {
     background-color: var(--bg-dark-card);
     border: var(--border-roit-thin);
-    border-radius: 12px;
-    padding: 8px;
+    color: var(--roit-text-secondary);
 }
 
-.platform-option {
-    flex: 1;
+/* Fade para mensagens antigas */
+.chat-message.faded {
+    opacity: 0.4;
+}
+
+/* Indicador de Digitação (Thinking...) */
+.typing-indicator {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    padding: 8px 0;
+}
+
+.typing-dot {
+    width: 6px;
+    height: 6px;
+    background-color: var(--roit-blue-neon);
+    border-radius: 50%;
+    animation: typing-bounce 1.4s infinite ease-in-out both;
+}
+
+.typing-dot:nth-child(1) { animation-delay: -0.32s; }
+.typing-dot:nth-child(2) { animation-delay: -0.16s; }
+
+@keyframes typing-bounce {
+    0%, 80%, 100% { transform: scale(0); }
+    40% { transform: scale(1); }
+}
+
+/* Área de Input Fixa */
+.chat-input-container {
+    margin-top: 16px;
+}
+
+.chat-input-bar {
     display: flex;
     align-items: center;
-    justify-content: center;
-    gap: 8px;
-    padding: 10px;
+    background-color: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.15);
     border-radius: 8px;
+    padding: 8px 16px;
+    transition: border-color 0.3s;
+}
+
+.chat-input-bar:focus-within {
+    border-color: var(--roit-white);
+}
+
+.chat-input-bar input {
+    flex-grow: 1;
+    background: transparent;
+    border: none;
+    color: var(--roit-white);
+    font-size: 15px;
+    outline: none;
+    padding: 8px 0;
+}
+
+.btn-chat-send {
+    background: var(--roit-white);
+    color: #000;
+    border: none;
+    border-radius: 6px;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
     cursor: pointer;
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--roit-text-secondary);
     transition: var(--transition-roit);
 }
 
-.platform-option i {
-    font-size: 16px;
+.btn-chat-send:hover {
+    background: #E0E0E0;
 }
 
-.platform-option:hover {
-    color: var(--roit-text-primary);
+/* Opções (Múltipla Escolha) */
+.chat-options-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
 }
 
-.platform-option.selected {
-    background-color: var(--bg-dark-input);
-    border: var(--border-roit-thin);
-    color: var(--roit-white);
-}
-
-/* Foco Selector Buttons (Mockup Visual) */
-.focus-selector {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 8px;
+.chat-option-btn {
     background-color: var(--bg-dark-card);
     border: var(--border-roit-thin);
-    border-radius: 12px;
-    padding: 8px;
-}
-
-.focus-btn {
-    background: transparent;
-    border: var(--border-roit-thin);
     color: var(--roit-text-secondary);
-    border-radius: 6px;
-    padding: 8px;
-    font-family: var(--font-inter);
-    font-size: 12px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: var(--transition-roit);
-}
-
-.focus-btn:hover {
-    color: var(--roit-text-primary);
-    border-color: rgba(255, 255, 255, 0.3);
-}
-
-.focus-btn.selected {
-    background-color: var(--bg-dark-input);
-    border-color: var(--roit-white);
-    color: var(--roit-white);
-}
-
-/* Inputs, Textareas */
-input[type="text"], textarea {
-    background-color: transparent;
-    border: var(--border-roit-thin);
-    border-radius: var(--border-radius-main);
-    color: var(--roit-text-primary);
-    font-family: var(--font-inter);
-    font-size: 13px;
-    padding: 14px 18px;
-    outline: none;
-    resize: none;
-    transition: var(--transition-roit);
-}
-
-input[type="text"]:focus, textarea:focus {
-    border-color: var(--roit-white);
-}
-
-.action-bar {
-    margin-top: 12px;
-    display: flex;
-    justify-content: flex-end;
-}
-
-.btn-generate-script {
-    background: var(--roit-white);
-    color: #000000;
-    border: none;
-    border-radius: 50px;
-    padding: 16px 40px;
-    font-family: var(--font-outfit);
-    font-weight: 700;
+    padding: 12px 20px;
+    border-radius: 8px;
     font-size: 14px;
     cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 10px;
     transition: var(--transition-roit);
 }
 
-.btn-generate-script:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 30px rgba(255, 255, 255, 0.15);
+.chat-option-btn:hover {
+    color: var(--roit-white);
+    border-color: rgba(255, 255, 255, 0.3);
 }
 
 /* TELA 2: SPLIT SCREEN VIEW */
