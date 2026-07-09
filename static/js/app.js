@@ -268,13 +268,13 @@ function switchToTab(tabId) {
 // --- CONVERSATIONAL UI STATE MACHINE ---
 let convStep = 0;
 const convSteps = [
-    { key: "objetivo", prompt: "Olá. Qual é o objetivo principal do vídeo que vamos criar hoje?", type: "text" },
+    { key: "objetivo", prompt: "Olá. Qual é o objetivo principal do vídeo que vamos criar hoje?", type: "text", placeholder: "Ex: Vender meu curso de design, explicar como investir..." },
     { key: "plataforma", prompt: "Excelente. Em qual plataforma você planeja postar?", type: "options", options: ["TikTok", "Instagram Reels", "YouTube Shorts"] },
     { key: "tipo", prompt: "Qual será o foco narrativo?", type: "options", options: ["storytelling", "viral", "analise", "educativo"] },
-    { key: "publico", prompt: "Para quem estamos falando? (Público-alvo e Tom de voz)", type: "text" },
-    { key: "mensagem_dor", prompt: "Qual problema ou dor do seu público este vídeo resolve?", type: "text" },
-    { key: "duracao", prompt: "Qual a duração estimada? (ex: 30s, 1min)", type: "text" },
-    { key: "cta", prompt: "E para fechar: Qual será a chamada para ação (CTA) no final do vídeo?", type: "text" }
+    { key: "publico", prompt: "Para quem estamos falando? (Público-alvo e Tom de voz)", type: "text", placeholder: "Ex: Jovens de 20 anos. Tom animado e informal." },
+    { key: "mensagem_dor", prompt: "Qual problema ou dor do seu público este vídeo resolve?", type: "text", placeholder: "Ex: Eles não sabem precificar seus serviços." },
+    { key: "duracao", prompt: "Qual a duração estimada?", type: "text", placeholder: "Ex: Cerca de 30 a 60 segundos." },
+    { key: "cta", prompt: "E para fechar: Qual será a chamada para ação (CTA) no final do vídeo?", type: "text", placeholder: "Ex: Comente EU QUERO para receber o link no direct." }
 ];
 
 function initConversationalUI() {
@@ -285,9 +285,14 @@ function initConversationalUI() {
         publico: "", cta: "", objetivo: "", mensagem_dor: "", tom: "Didático / Informativo / Calmo"
     };
     
-    btnChatSendNew.addEventListener("click", handleChatSend);
+    // Usando tanto onclick quanto listener para garantir
+    btnChatSendNew.onclick = (e) => { e.preventDefault(); handleChatSend(); };
+    btnChatSendNew.addEventListener("click", (e) => { e.preventDefault(); handleChatSend(); });
     chatInputField.addEventListener("keypress", (e) => {
-        if (e.key === "Enter") handleChatSend();
+        if (e.key === "Enter") {
+            e.preventDefault();
+            handleChatSend();
+        }
     });
     
     // Inicia a primeira pergunta
@@ -341,6 +346,7 @@ function askNextQuestion() {
             chatInputBar.style.display = "flex";
             chatOptionsBar.style.display = "none";
             chatInputField.value = "";
+            chatInputField.placeholder = stepData.placeholder || "Digite sua resposta...";
             chatInputField.focus();
         }
     }, 600); // 600ms of "thinking"
@@ -1129,30 +1135,54 @@ function desenharCanvas() {
         ctx.shadowBlur = 0; // Reseta sombra
     });
     
-    // 3. Desenha os nós (neurônios)
+    // 3. Desenha os nós (neurônios) com estilo tecnológico
     nodes.forEach(node => {
         ctx.beginPath();
-        ctx.arc(node.x, node.y, node.r, 0, Math.PI * 2);
         
-        // Efeito de pulso para o centro
         if (node.type === "center") {
-            const pulse = 1 + Math.sin(Date.now() / 400) * 0.06;
+            const pulse = 1 + Math.sin(Date.now() / 300) * 0.08;
+            
+            // Anel externo rodando
+            const angleOffset = Date.now() / 1000;
+            ctx.setLineDash([10, 15]);
+            ctx.arc(node.x, node.y, (node.r * pulse) + 12, angleOffset, Math.PI * 2 + angleOffset);
+            ctx.strokeStyle = "rgba(0, 229, 255, 0.4)";
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            ctx.setLineDash([]);
+            
+            // Glow e preenchimento escuro com borda brilhante
+            ctx.beginPath();
             ctx.arc(node.x, node.y, node.r * pulse, 0, Math.PI * 2);
-            ctx.fillStyle = "rgba(0, 0, 0, 0.8)";
+            ctx.shadowBlur = 20;
+            ctx.shadowColor = "rgba(0, 229, 255, 0.6)";
+            ctx.fillStyle = "#020810";
+            ctx.fill();
+            
+            ctx.lineWidth = 3;
+            ctx.strokeStyle = "#00E5FF";
+            ctx.stroke();
+            ctx.shadowBlur = 0;
+            
         } else {
-            ctx.fillStyle = "#000000";
+            // Nós de categorias e arquivos
+            ctx.arc(node.x, node.y, node.r, 0, Math.PI * 2);
+            ctx.shadowBlur = 15;
+            ctx.shadowColor = node.color;
+            ctx.fillStyle = "#0A0A0E";
+            ctx.fill();
+            
+            ctx.lineWidth = 2;
+            ctx.strokeStyle = node.color;
+            ctx.stroke();
+            ctx.shadowBlur = 0;
         }
-        
-        ctx.strokeStyle = node.color;
-        ctx.lineWidth = node.type === "file" ? 1.5 : 3;
-        ctx.fill();
-        ctx.stroke();
         
         // Detalhe de luz dentro do neurônio se selecionado
         if (selectedNode === node) {
             ctx.beginPath();
-            ctx.arc(node.x, node.y, node.r + 4, 0, Math.PI * 2);
-            ctx.strokeStyle = "rgba(255,255,255,0.4)";
+            ctx.arc(node.x, node.y, node.r + 6, 0, Math.PI * 2);
+            ctx.strokeStyle = "rgba(0, 229, 255, 0.5)";
             ctx.lineWidth = 1;
             ctx.stroke();
         }
