@@ -1,17 +1,21 @@
 /* Reset & Design System Tokens */
 :root {
-    --bg-dark-core: #09090B;
-    --bg-dark-sidebar: #0F0F13;
-    --bg-dark-card: #14141A;
-    --bg-dark-input: #121217;
+    --bg-dark-core: #000000;
+    --bg-dark-sidebar: #050505;
+    --bg-dark-card: #0A0A0A;
+    --bg-dark-input: #0F0F0F;
     
     --roit-white: #FFFFFF;
-    --roit-text-primary: #F4F4F6;
+    --roit-text-primary: #FDFDFD;
     --roit-text-secondary: #A0A0AA;
     --roit-text-muted: #52525B;
     
-    --border-roit-thin: 1px solid rgba(255, 255, 255, 0.12);
-    --border-roit-glow: 1px solid rgba(255, 255, 255, 0.4);
+    --roit-blue-core: #1877F2;
+    --roit-blue-neon: #00E5FF;
+    --roit-blue-gradient: linear-gradient(135deg, #1877F2 0%, #00E5FF 100%);
+    
+    --border-roit-thin: 1px solid rgba(255, 255, 255, 0.05);
+    --border-roit-glow: 1px solid rgba(0, 229, 255, 0.2);
     --border-radius-main: 14px;
     --border-radius-sidebar: 32px;
     
@@ -232,7 +236,7 @@ body {
     position: absolute;
     left: 50%;
     transform: translateX(-50%);
-    border: 1.5px solid rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.05);
     padding: 6px 40px;
     border-radius: 4px;
     display: flex;
@@ -453,8 +457,8 @@ input[type="text"]:focus, textarea:focus {
 }
 
 .btn-generate-script {
-    background-color: var(--roit-white);
-    color: var(--bg-dark-core);
+    background: var(--roit-blue-gradient);
+    color: #000000;
     border: none;
     border-radius: 8px;
     padding: 14px 28px;
@@ -470,7 +474,7 @@ input[type="text"]:focus, textarea:focus {
 
 .btn-generate-script:hover {
     transform: translateY(-1px);
-    box-shadow: 0 6px 20px rgba(255, 255, 255, 0.15);
+    box-shadow: 0 4px 20px rgba(0, 229, 255, 0.3);
 }
 
 /* TELA 2: SPLIT SCREEN VIEW */
