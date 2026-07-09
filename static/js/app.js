@@ -268,7 +268,7 @@ function switchToTab(tabId) {
 // --- CONVERSATIONAL UI STATE MACHINE ---
 let convStep = 0;
 const convSteps = [
-    { key: "objetivo", prompt: "Sobre o que será o seu vídeo?", type: "options", options: ["Quero vender um produto", "Quero viralizar um vídeo", "Quero gerar autoridade", "Quero contar uma história"] },
+    { key: "objetivo", prompt: "Sobre o que será o seu vídeo?", type: "text", placeholder: "Me conte sua ideia. Ex: Quero vender meu curso..." },
     { key: "plataforma", prompt: "Onde esse vídeo vai morar?", type: "options", options: ["TikTok", "Instagram Reels", "YouTube Shorts"] },
     { key: "tipo", prompt: "Qual será a estrutura principal do roteiro?", type: "options", options: ["storytelling", "viral", "analise", "educativo"] },
     { key: "publico", prompt: "Quem precisa assistir esse vídeo? (Ex: Jovens de 20 anos querendo investir)", type: "text", placeholder: "Descreva seu público-alvo..." },
