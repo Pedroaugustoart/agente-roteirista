@@ -139,10 +139,11 @@ DADOS DO BRIEFING COLETADOS:
             print(f"Erro no RAG/Retrieval: {e}")
             return db.obter_conteudo_conhecimento_usuario(usuario_id, categoria)
 
-    def criar_sessao_chat(self, session_id, briefing, usuario_id=None):
+    def criar_sessao_chat_stream(self, session_id, briefing, usuario_id=None):
         """
         Cria um chat persistente na API do Gemini para a sessão do usuário.
-        Envia o briefing com a base de conhecimento exclusiva global + exclusiva da conta do usuário.
+        Envia o briefing com a base de conhecimento exclusiva global + exclusiva da conta (RAG).
+        Retorna um generator (yield) com os pedaços de texto da IA.do usuário.
         """
         system_instruction = self.carregar_system_prompt()
         template = self.carregar_template(briefing["tipo"])
@@ -207,8 +208,10 @@ Lembre-se de adicionar a seção de "SEO e Metadados do Vídeo" no final.
             )
             
             self.active_chats[session_id] = chat
-            response = chat.send_message(message_parts)
-            return response.text
+            response = chat.send_message_stream(message_parts)
+            for chunk in response:
+                if chunk.text:
+                    yield chunk.text
             
         except Exception as e:
             raise RuntimeError(f"Erro ao inicializar sessão do Gemini: {e}")

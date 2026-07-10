@@ -66,6 +66,7 @@ const chatFeed = document.getElementById("chat-feed");
 const chatInputBar = document.getElementById("chat-input-bar");
 const chatInputField = document.getElementById("chat-input-field");
 const btnChatSendNew = document.getElementById("btn-chat-send");
+const btnChatBack = document.getElementById("btn-chat-back");
 const chatOptionsBar = document.getElementById("chat-options-bar");
 const btnVoiceChatNew = document.getElementById("btn-voice-input-chat");
 
@@ -386,12 +387,17 @@ function initConversationalUI() {
     askNextQuestion();
 }
 
-function askNextQuestion() {
+function askNextQuestion(isBack = false) {
     updateBriefingPanel();
     
+    if (btnChatBack) {
+        btnChatBack.style.display = convStep > 0 ? "flex" : "none";
+    }
+    
     if (convStep >= convSteps.length) {
-        appendConversationalMessage("system", "Tudo pronto. Iniciando sinapses cerebrais para gerar seu roteiro mágico...");
         chatInputBar.style.display = "none";
+        if (btnChatBack) btnChatBack.style.display = "none";
+        appendConversationalMessage("system", "Tudo pronto. Iniciando sinapses cerebrais para gerar seu roteiro mágico...");
         setTimeout(() => gerarNovoRoteiro(), 1500);
         return;
     }
@@ -419,7 +425,7 @@ function askNextQuestion() {
         if (typingEl) typingEl.remove();
         
         // Manda reflexão se não for o primeiro passo
-        if (convStep > 0) {
+        if (convStep > 0 && !isBack) {
             const reflex = reflexiveMessages[Math.floor(Math.random() * reflexiveMessages.length)];
             appendConversationalMessage("system", reflex);
         }
@@ -573,22 +579,68 @@ async function gerarNovoRoteiro() {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(briefingData)
         });
-
-        const data = await response.json();
+        
         hideTypingIndicator();
-
-        if (response.ok) {
-            sessionId = data.session_id;
-            activeRoteiroId = data.roteiro_id;
-            lastGeneratedScript = data.script;
-
-            exibirRoteiro(data.script);
-            appendMessage("agent", "Roteiro gerado com sucesso! 🎉 Destaquei as falas na coluna direita. Se precisar mudar alguma parte, me envie uma mensagem por texto ou clique no microfone e fale comigo.");
-            carregarHistorico();
-        } else {
+        
+        if (!response.ok) {
+            const data = await response.json();
             appendMessage("agent", `⚠️ Falha ao gerar roteiro: ${data.error}`);
             scriptViewport.innerHTML = `<p class="empty-state" style="color: #ef4444;">Erro na geração.</p>`;
+            return;
         }
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder("utf-8");
+        let done = false;
+        let scriptAcumulado = "";
+        
+        scriptViewport.innerHTML = ""; // Limpa viewport para receber o streaming
+
+        while (!done) {
+            const { value, done: readerDone } = await reader.read();
+            done = readerDone;
+            
+            if (value) {
+                const chunk = decoder.decode(value, { stream: !done });
+                // Como é SSE, recebemos pacotes tipo "data: {...}\n\n"
+                const lines = chunk.split("\n\n");
+                
+                for (const line of lines) {
+                    if (line.startsWith("data: ")) {
+                        const jsonStr = line.replace("data: ", "").trim();
+                        if (jsonStr) {
+                            try {
+                                const parsed = JSON.parse(jsonStr);
+                                
+                                if (parsed.error) {
+                                    appendMessage("agent", `⚠️ Falha ao gerar roteiro: ${parsed.error}`);
+                                    return;
+                                }
+                                
+                                if (parsed.chunk) {
+                                    scriptAcumulado += parsed.chunk;
+                                    const rawHtml = marked.parse(scriptAcumulado);
+                                    scriptViewport.innerHTML = DOMPurify.sanitize(rawHtml);
+                                    scriptViewport.scrollTop = scriptViewport.scrollHeight;
+                                }
+                                
+                                if (parsed.done) {
+                                    sessionId = parsed.session_id;
+                                    activeRoteiroId = parsed.roteiro_id;
+                                    lastGeneratedScript = parsed.script;
+                                    
+                                    appendMessage("agent", "Roteiro gerado com sucesso! 🎉 Destaquei as falas na coluna direita. Se precisar mudar alguma parte, me envie uma mensagem por texto ou clique no microfone e fale comigo.");
+                                    carregarHistorico();
+                                }
+                            } catch (e) {
+                                console.warn("Erro ao parsear chunk SSE:", e, jsonStr);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
     } catch (err) {
         hideTypingIndicator();
         appendMessage("agent", "❌ Erro de conexão com o servidor local.");
@@ -604,6 +656,21 @@ function initChatActions() {
             enviarMensagem();
         }
     });
+
+    if (btnChatBack) {
+        btnChatBack.addEventListener("click", () => {
+            if (convStep > 0) {
+                convStep--;
+                // Remove as duas últimas mensagens (a pergunta do bot e a resposta anterior do usuário)
+                const messages = chatFeed.querySelectorAll(".chat-message");
+                if (messages.length >= 2) {
+                    messages[messages.length - 1].remove(); // Remove pergunta do bot
+                    messages[messages.length - 2].remove(); // Remove resposta do usuário
+                }
+                askNextQuestion(true);
+            }
+        });
+    }
 
     btnCopy.addEventListener("click", () => {
         if (!lastGeneratedScript) return;

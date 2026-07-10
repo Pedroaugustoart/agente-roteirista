@@ -4,7 +4,7 @@ import webbrowser
 from functools import wraps
 from threading import Timer
 from datetime import datetime
-from flask import Flask, request, jsonify, make_response, render_template, session
+from flask import Flask, request, jsonify, make_response, render_template, session, redirect, url_for, Response, stream_with_context
 from dotenv import load_dotenv
 from google.oauth2 import id_token
 from google.auth.transport import requests as google_requests
@@ -231,27 +231,44 @@ def generate():
         usuario_id = session["user_id"]
         session_id = str(uuid.uuid4())
         
-        script = agent.criar_sessao_chat(session_id, briefing, usuario_id=usuario_id)
+        def generate_stream():
+            full_script = ""
+            try:
+                # Fazemos yield da stream progressivamente
+                for chunk in agent.criar_sessao_chat_stream(session_id, briefing, usuario_id=usuario_id):
+                    full_script += chunk
+                    # SSE format: data: {"chunk": "..."}\n\n
+                    yield f"data: {json.dumps({'chunk': chunk})}\n\n"
+                    
+                # Ao terminar de gerar o script completo, salvamos no BD
+                objetivo = briefing.get("objetivo", "")
+                titulo = (objetivo[:30] + "...") if len(objetivo) > 30 else (objetivo or f"Roteiro {briefing.get('tipo', '').capitalize()}")
+                
+                roteiro_id = db.salvar_roteiro(
+                    usuario_id=usuario_id,
+                    titulo=titulo,
+                    plataforma=briefing.get("plataforma"),
+                    categoria=briefing.get("tipo"),
+                    conteudo=full_script,
+                    briefing_json=briefing
+                )
+                
+                if not is_production:
+                    salvar_roteiro_local(full_script, briefing)
+                    
+                # Envia o pacote final informando sucesso e os metadados
+                yield f"data: {json.dumps({'done': True, 'session_id': session_id, 'roteiro_id': roteiro_id, 'script': full_script})}\n\n"
+                
+            except Exception as e:
+                logger.error(f"Erro no meio do streaming: {e}")
+                import traceback
+                traceback.print_exc()
+                yield f"data: {json.dumps({'error': f'Erro interno: {str(e)}'})}\n\n"
+                
+        return Response(stream_with_context(generate_stream()), mimetype='text/event-stream')
         
-        objetivo = briefing.get("objetivo", "")
-        titulo = (objetivo[:30] + "...") if len(objetivo) > 30 else (objetivo or f"Roteiro {briefing.get('tipo', '').capitalize()}")
-        
-        roteiro_id = db.salvar_roteiro(
-            usuario_id=usuario_id,
-            titulo=titulo,
-            plataforma=briefing.get("plataforma"),
-            categoria=briefing.get("tipo"),
-            conteudo=script,
-            briefing_json=briefing
-        )
-        
-        # Só grava no disco de backup se rodar localmente no PC
-        if not is_production:
-            salvar_roteiro_local(script, briefing)
-        
-        return jsonify({"session_id": session_id, "roteiro_id": roteiro_id, "script": script})
     except Exception as e:
-        logger.error(f"Erro na geração do roteiro: {e}")
+        logger.error(f"Erro na preparação do streaming: {e}")
         import traceback
         traceback.print_exc()
         return jsonify({"error": f"Erro interno: {str(e)}"}), 500
