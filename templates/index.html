@@ -19,7 +19,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <!-- Google Identity Services para Login com Google -->
     <script src="https://accounts.google.com/gsi/client" async defer></script>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=1.3">
 </head>
 <body>
     <div class="app-container">
@@ -372,6 +372,6 @@
         <div class="minimized-progress-ring" id="minimized-progress-text">0%</div>
     </div>
 
-    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/app.js') }}?v=1.3"></script>
 </body>
 </html>
